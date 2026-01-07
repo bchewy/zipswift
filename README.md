@@ -2,9 +2,7 @@
 
 A SwiftUI iOS puzzle game inspired by LinkedIn's Zip. Draw a path through a 6x6 grid, visiting numbered nodes in order while filling every cell.
 
-https://github.com/user-attachments/assets/REPLACE_WITH_VIDEO_URL
-
-> **Note:** After pushing, edit this README on GitHub and drag `jan7.MP4` into the editor to generate an embed URL, then replace the link above.
+https://github.com/bchewy/zipswift/releases/download/v1.0.0/jan7.MP4
 
 ## Gameplay
 
