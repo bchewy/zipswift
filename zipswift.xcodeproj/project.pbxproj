@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		201589502F0E53000009697E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2015892F2F0E529B0009697E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 201589362F0E529B0009697E;
+			remoteInfo = zipswift;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		201589372F0E529B0009697E /* zipswift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = zipswift.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2015894E2F0E53000009697E /* zipswiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = zipswiftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +27,22 @@
 			path = zipswift;
 			sourceTree = "<group>";
 		};
+		2015894F2F0E53000009697E /* zipswiftTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = zipswiftTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		201589342F0E529B0009697E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2015894B2F0E53000009697E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				201589392F0E529B0009697E /* zipswift */,
+				2015894F2F0E53000009697E /* zipswiftTests */,
 				201589382F0E529B0009697E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				201589372F0E529B0009697E /* zipswift.app */,
+				2015894E2F0E53000009697E /* zipswiftTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +95,29 @@
 			productReference = 201589372F0E529B0009697E /* zipswift.app */;
 			productType = "com.apple.product-type.application";
 		};
+		2015894D2F0E53000009697E /* zipswiftTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 201589542F0E53000009697E /* Build configuration list for PBXNativeTarget "zipswiftTests" */;
+			buildPhases = (
+				2015894A2F0E53000009697E /* Sources */,
+				2015894B2F0E53000009697E /* Frameworks */,
+				2015894C2F0E53000009697E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				201589512F0E53000009697E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				2015894F2F0E53000009697E /* zipswiftTests */,
+			);
+			name = zipswiftTests;
+			packageProductDependencies = (
+			);
+			productName = zipswiftTests;
+			productReference = 2015894E2F0E53000009697E /* zipswiftTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -82,6 +130,10 @@
 				TargetAttributes = {
 					201589362F0E529B0009697E = {
 						CreatedOnToolsVersion = 26.2;
+					};
+					2015894D2F0E53000009697E = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 201589362F0E529B0009697E;
 					};
 				};
 			};
@@ -100,12 +152,20 @@
 			projectRoot = "";
 			targets = (
 				201589362F0E529B0009697E /* zipswift */,
+				2015894D2F0E53000009697E /* zipswiftTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		201589352F0E529B0009697E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2015894C2F0E53000009697E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +182,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2015894A2F0E53000009697E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		201589512F0E53000009697E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 201589362F0E529B0009697E /* zipswift */;
+			targetProxy = 201589502F0E53000009697E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		201589402F0E529C0009697E /* Debug */ = {
@@ -310,6 +385,50 @@
 			};
 			name = Release;
 		};
+		201589522F0E53000009697E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = W6JNF8VXYW;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = bchewy.com.zipswiftTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/zipswift.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/zipswift";
+			};
+			name = Debug;
+		};
+		201589532F0E53000009697E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = W6JNF8VXYW;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = bchewy.com.zipswiftTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/zipswift.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/zipswift";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -327,6 +446,15 @@
 			buildConfigurations = (
 				201589432F0E529C0009697E /* Debug */,
 				201589442F0E529C0009697E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		201589542F0E53000009697E /* Build configuration list for PBXNativeTarget "zipswiftTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				201589522F0E53000009697E /* Debug */,
+				201589532F0E53000009697E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
