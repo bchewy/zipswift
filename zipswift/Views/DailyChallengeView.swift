@@ -254,6 +254,9 @@ struct DailyChallengeView: View {
         // Submit to Game Center
         GameCenterManager.shared.submitDailyTime(finalTime)
 
+        // Update widget data
+        WidgetDataManager.shared.updateWidgetData()
+
         withAnimation {
             showWinOverlay = true
         }
