@@ -421,3 +421,31 @@
 - Authentication state tracked via isAuthenticated bool for conditional UI
 
 ---
+
+## 2026-01-09 - ZIP-016
+
+### What was implemented
+- ZipSwiftWidget extension directory with complete WidgetKit implementation
+- WidgetDataManager for sharing data via App Groups
+- SmallWidgetView showing streak flame, today's best time, "Tap to play"
+- MediumWidgetView with streak, stats, and MiniGridPreview
+- Timeline refreshes at midnight and on daily completion
+- Deep linking via widgetURL("zipswift://daily")
+
+### Files changed
+- ZipSwiftWidget/ZipSwiftWidget.swift (new - complete widget implementation)
+- ZipSwiftWidget/Info.plist (new - widget extension config)
+- zipswift/Models/WidgetDataManager.swift (new - shared data manager)
+- zipswift/Views/DailyChallengeView.swift (added updateWidgetData() call)
+
+### Learnings
+- Widget extension requires Xcode target creation - code files can be prepared but target must be added manually
+- App Groups (group.com.zipswift.shared) for sharing UserDefaults between app and widget
+- WidgetSharedData Codable struct stores minimal data for widget display
+- containerBackground(for: .widget) is modern way to set widget background
+- Timeline policy .after(nextMidnight) for daily refresh
+- widgetURL() for deep linking from widget taps
+- MiniGridPreview uses Canvas for lightweight grid rendering
+- WidgetCenter.shared.reloadAllTimelines() to trigger widget refresh
+
+---

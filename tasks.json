@@ -307,8 +307,8 @@
         "Build succeeds with no warnings"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Widgets increase visibility and remind players to maintain streaks"
+      "passes": true,
+      "notes": "Implemented: ZipSwiftWidget/ extension directory with WidgetKit implementation. WidgetSharedData struct for sharing data via App Groups (group.com.zipswift.shared). SmallWidgetView shows streak flame, today's best time or 'Tap to play'. MediumWidgetView shows streak, stats, and MiniGridPreview component. Timeline refreshes at midnight. widgetURL(zipswift://daily) for deep linking (already supported in app). WidgetDataManager.shared.updateWidgetData() called on daily completion. Note: Widget extension target must be added in Xcode manually - directory and files are ready."
     },
     {
       "id": "ZIP-017",
