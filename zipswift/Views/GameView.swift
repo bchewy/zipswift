@@ -18,13 +18,17 @@ struct GameView: View {
     @State private var showHistory = false
     @State private var showSettings = false
     @State private var showDailyChallenge = false
+    @State private var showAchievements = false
+    @State private var showAchievementToast = false
     @State private var previousPathCount = 1
     @State private var previousTarget = 2
+    @State private var undoUsedThisGame = false
 
     @Environment(\.scenePhase) private var scenePhase
 
     private let historyManager = GameHistoryManager.shared
     private let audioManager = AudioManager.shared
+    private let achievementManager = AchievementManager.shared
     private var settings: SettingsManager { SettingsManager.shared }
 
     init() {
@@ -49,6 +53,12 @@ struct GameView: View {
                     // Settings button
                     Button(action: { showSettings = true }) {
                         Image(systemName: "gearshape")
+                            .font(.title3)
+                    }
+
+                    // Achievements button
+                    Button(action: { showAchievements = true }) {
+                        Image(systemName: "trophy")
                             .font(.title3)
                     }
 
@@ -142,6 +152,7 @@ struct GameView: View {
 
                 // Undo button
                 Button(action: {
+                    undoUsedThisGame = true
                     gameState.undo()
                 }) {
                     HStack {
@@ -171,6 +182,14 @@ struct GameView: View {
                     onPlayAgain: generateNewGame
                 )
             }
+
+            // Achievement toast
+            if showAchievementToast, let achievement = achievementManager.recentlyUnlocked {
+                AchievementToastView(achievement: achievement) {
+                    showAchievementToast = false
+                    achievementManager.clearRecentlyUnlocked()
+                }
+            }
         }
         .sheet(isPresented: $showHistory) {
             HistoryView()
@@ -180,6 +199,9 @@ struct GameView: View {
         }
         .fullScreenCover(isPresented: $showDailyChallenge) {
             DailyChallengeView()
+        }
+        .sheet(isPresented: $showAchievements) {
+            AchievementsView()
         }
         .tint(settings.accentColor.color)
         .onChange(of: gameState.isComplete) { _, isComplete in
@@ -248,6 +270,7 @@ struct GameView: View {
         finalTime = 0
         previousPathCount = 1
         previousTarget = 2
+        undoUsedThisGame = false
     }
 
     // MARK: - Timer Management
@@ -299,6 +322,22 @@ struct GameView: View {
         )
         historyManager.save(record)
 
+        // Check achievements
+        achievementManager.checkAchievements(
+            elapsedTime: finalTime,
+            undoUsed: undoUsedThisGame,
+            difficulty: currentDifficulty,
+            isDaily: false,
+            dailyStreak: settings.dailyStreak,
+            totalGames: historyManager.totalGamesCount
+        )
+
+        if achievementManager.recentlyUnlocked != nil {
+            triggerAchievementHaptic()
+            audioManager.playAchievementSound()
+            showAchievementToast = true
+        }
+
         withAnimation {
             showWinOverlay = true
         }
@@ -314,6 +353,13 @@ struct GameView: View {
     }
 
     private func triggerSuccessHaptic() {
+        guard settings.hapticsEnabled else { return }
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(.success)
+    }
+
+    private func triggerAchievementHaptic() {
         guard settings.hapticsEnabled else { return }
         let generator = UINotificationFeedbackGenerator()
         generator.prepare()

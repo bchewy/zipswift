@@ -96,6 +96,21 @@ class AudioManager {
         }
     }
 
+    /// Play achievement unlock sound
+    func playAchievementSound() {
+        guard isSoundEnabled else { return }
+        let achievementTones: [Float] = [
+            659.25, 783.99, 987.77, 1318.51
+        ]
+
+        for (index, freq) in achievementTones.enumerated() {
+            let delay = Double(index) * 0.08
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: 0.2, volume: 0.45, attack: 0.01, decay: 0.18)
+            }
+        }
+    }
+
     /// Toggle sound on/off
     func toggleSound() {
         SettingsManager.shared.soundEnabled.toggle()
