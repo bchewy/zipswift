@@ -32,6 +32,8 @@ struct GameView: View {
     @State private var hintCells: [GridPoint] = []
     @State private var currentPackId: String?
     @State private var currentPackLevelIndex: Int?
+    @State private var showRestartConfirmation = false
+    @State private var isGridCollapsed = false
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -185,13 +187,43 @@ struct GameView: View {
 
                 Spacer()
 
-                // Game grid
-                GridView(
-                    gameState: gameState,
-                    onInvalidMove: triggerInvalidMoveHaptic,
-                    hintCells: hintCells
-                )
-                .padding(.horizontal, 16)
+                // Game grid with swipe to collapse/expand and double-tap to restart
+                if !isGridCollapsed {
+                    GridView(
+                        gameState: gameState,
+                        onInvalidMove: triggerInvalidMoveHaptic,
+                        hintCells: hintCells
+                    )
+                    .padding(.horizontal, 16)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .gesture(
+                        DragGesture(minimumDistance: 50)
+                            .onEnded { value in
+                                if value.translation.height > 50 && abs(value.translation.width) < 50 {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        isGridCollapsed = true
+                                    }
+                                    triggerLightHaptic()
+                                }
+                            }
+                    )
+                    .onTapGesture(count: 2) {
+                        showRestartConfirmation = true
+                        triggerLightHaptic()
+                    }
+                } else {
+                    CollapsedGridView(
+                        difficulty: currentDifficulty,
+                        onExpand: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                isGridCollapsed = false
+                            }
+                            triggerLightHaptic()
+                        }
+                    )
+                    .padding(.horizontal, 16)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
 
                 Spacer()
 
@@ -219,10 +251,11 @@ struct GameView: View {
                     .disabled(hintsUsedThisGame >= 3 || showingHint)
                     .opacity(hintsUsedThisGame >= 3 ? 0.5 : 1.0)
 
-                    // Undo button
+                    // Undo button with long press for undo all
                     Button(action: {
                         undoUsedThisGame = true
                         gameState.undo()
+                        triggerLightHaptic()
                     }) {
                         HStack {
                             Image(systemName: "arrow.uturn.backward")
@@ -237,6 +270,12 @@ struct GameView: View {
                     }
                     .disabled(gameState.path.count <= 1)
                     .opacity(gameState.path.count <= 1 ? 0.5 : 1.0)
+                    .simultaneousGesture(
+                        LongPressGesture(minimumDuration: 0.5)
+                            .onEnded { _ in
+                                undoAll()
+                            }
+                    )
                 }
 
                 // How to play panel
@@ -288,6 +327,21 @@ struct GameView: View {
             ChallengeGameView(mode: mode)
         }
         .tint(settings.accentColor.color)
+        .alert("Restart Puzzle?", isPresented: $showRestartConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Restart", role: .destructive) {
+                generateNewGame()
+            }
+        } message: {
+            Text("Start a new puzzle with the same difficulty?")
+        }
+        .onShake {
+            showRestartConfirmation = true
+            triggerLightHaptic()
+        }
+        .keyboardShortcut("r", modifiers: []) { generateNewGame() }
+        .keyboardShortcut("u", modifiers: []) { if gameState.path.count > 1 { undoUsedThisGame = true; gameState.undo() } }
+        .keyboardShortcut("n", modifiers: []) { generateNewGame() }
         .onChange(of: gameState.isComplete) { _, isComplete in
             if isComplete {
                 handleWin()
@@ -314,6 +368,15 @@ struct GameView: View {
                 audioManager.playNodeSound()
             }
             previousTarget = newTarget
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openDailyChallenge)) { _ in
+            showDailyChallenge = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .startEasyGame)) { _ in
+            changeDifficulty(to: .easy)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .startHardGame)) { _ in
+            changeDifficulty(to: .hard)
         }
     }
 
@@ -488,7 +551,30 @@ struct GameView: View {
         }
     }
 
+    // MARK: - Quick Actions
+
+    private func undoAll() {
+        guard gameState.path.count > 1 else { return }
+        undoUsedThisGame = true
+        gameState.reset()
+        triggerMediumHaptic()
+    }
+
     // MARK: - Haptic Feedback
+
+    private func triggerLightHaptic() {
+        guard settings.hapticsEnabled else { return }
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.prepare()
+        generator.impactOccurred()
+    }
+
+    private func triggerMediumHaptic() {
+        guard settings.hapticsEnabled else { return }
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+    }
 
     private func triggerHintHaptic() {
         guard settings.hapticsEnabled else { return }
@@ -560,6 +646,107 @@ struct TimerView: View {
                 timerScale = 1.0
             }
         }
+    }
+}
+
+// MARK: - Collapsed Grid View
+
+struct CollapsedGridView: View {
+    let difficulty: Difficulty
+    let onExpand: () -> Void
+
+    private var accentColor: Color { SettingsManager.shared.accentColor.color }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "chevron.compact.down")
+                .font(.title2)
+                .foregroundColor(.secondary)
+
+            Text("Puzzle minimized")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            Button(action: onExpand) {
+                HStack {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    Text("Expand")
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(accentColor)
+                .cornerRadius(10)
+            }
+        }
+        .padding(.vertical, 40)
+        .frame(maxWidth: .infinity)
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(12)
+        .gesture(
+            DragGesture(minimumDistance: 50)
+                .onEnded { value in
+                    if value.translation.height < -50 && abs(value.translation.width) < 50 {
+                        onExpand()
+                    }
+                }
+        )
+    }
+}
+
+// MARK: - Shake Detection
+
+extension UIWindow {
+    open override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+        if motion == .motionShake {
+            NotificationCenter.default.post(name: .deviceDidShake, object: nil)
+        }
+        super.motionEnded(motion, with: event)
+    }
+}
+
+extension Notification.Name {
+    static let deviceDidShake = Notification.Name("deviceDidShake")
+}
+
+struct ShakeViewModifier: ViewModifier {
+    let action: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .onReceive(NotificationCenter.default.publisher(for: .deviceDidShake)) { _ in
+                action()
+            }
+    }
+}
+
+extension View {
+    func onShake(perform action: @escaping () -> Void) -> some View {
+        modifier(ShakeViewModifier(action: action))
+    }
+}
+
+// MARK: - Keyboard Shortcuts
+
+struct KeyboardShortcutModifier: ViewModifier {
+    let key: KeyEquivalent
+    let modifiers: EventModifiers
+    let action: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                Button("") { action() }
+                    .keyboardShortcut(key, modifiers: modifiers)
+                    .opacity(0)
+            )
+    }
+}
+
+extension View {
+    func keyboardShortcut(_ key: KeyEquivalent, modifiers: EventModifiers = [], action: @escaping () -> Void) -> some View {
+        modifier(KeyboardShortcutModifier(key: key, modifiers: modifiers, action: action))
     }
 }
 
