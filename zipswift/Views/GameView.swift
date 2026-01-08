@@ -23,6 +23,7 @@ struct GameView: View {
     @State private var showAchievementToast = false
     @State private var showLevelPacks = false
     @State private var showChallengeModes = false
+    @State private var showLeaderboards = false
     @State private var activeChallengeMode: ChallengeMode?
     @State private var previousPathCount = 1
     @State private var previousTarget = 2
@@ -41,6 +42,7 @@ struct GameView: View {
     private let audioManager = AudioManager.shared
     private let achievementManager = AchievementManager.shared
     private let levelProgressManager = LevelProgressManager.shared
+    private let gameCenterManager = GameCenterManager.shared
     private var settings: SettingsManager { SettingsManager.shared }
 
     init() {
@@ -103,6 +105,14 @@ struct GameView: View {
                     Button(action: { showChallengeModes = true }) {
                         Image(systemName: "bolt.fill")
                             .font(.title3)
+                    }
+
+                    // Game Center Leaderboards button
+                    if gameCenterManager.isAuthenticated {
+                        Button(action: { showLeaderboards = true }) {
+                            Image(systemName: "chart.bar.fill")
+                                .font(.title3)
+                        }
                     }
 
                     Spacer()
@@ -326,6 +336,9 @@ struct GameView: View {
         .fullScreenCover(item: $activeChallengeMode) { mode in
             ChallengeGameView(mode: mode)
         }
+        .sheet(isPresented: $showLeaderboards) {
+            GameCenterLeaderboardsView()
+        }
         .tint(settings.accentColor.color)
         .alert("Restart Puzzle?", isPresented: $showRestartConfirmation) {
             Button("Cancel", role: .cancel) {}
@@ -527,6 +540,11 @@ struct GameView: View {
             audioManager.playAchievementSound()
             showAchievementToast = true
         }
+
+        // Submit to Game Center
+        gameCenterManager.submitTime(finalTime, for: currentDifficulty)
+        gameCenterManager.submitTotalStars(historyManager.totalStars)
+        gameCenterManager.syncAchievements(from: achievementManager.achievements)
 
         withAnimation {
             showWinOverlay = true
