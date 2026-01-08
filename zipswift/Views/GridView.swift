@@ -236,6 +236,14 @@ struct GridLinesView: View {
     let origin: CGPoint
     var lineColor: Color = Color.gray.opacity(0.3)
 
+    private var effectiveLineWidth: CGFloat {
+        SettingsManager.shared.highContrastMode ? 2.0 : 1.0
+    }
+
+    private var effectiveLineColor: Color {
+        SettingsManager.shared.highContrastMode ? lineColor.opacity(1.0) : lineColor
+    }
+
     var body: some View {
         Canvas { context, _ in
 
@@ -245,7 +253,7 @@ struct GridLinesView: View {
                 var path = Path()
                 path.move(to: CGPoint(x: x, y: origin.y))
                 path.addLine(to: CGPoint(x: x, y: origin.y + CGFloat(gridSize) * cellSize))
-                context.stroke(path, with: .color(lineColor), lineWidth: 1)
+                context.stroke(path, with: .color(effectiveLineColor), lineWidth: effectiveLineWidth)
             }
 
             // Horizontal lines
@@ -254,7 +262,7 @@ struct GridLinesView: View {
                 var path = Path()
                 path.move(to: CGPoint(x: origin.x, y: y))
                 path.addLine(to: CGPoint(x: origin.x + CGFloat(gridSize) * cellSize, y: y))
-                context.stroke(path, with: .color(lineColor), lineWidth: 1)
+                context.stroke(path, with: .color(effectiveLineColor), lineWidth: effectiveLineWidth)
             }
         }
     }
@@ -392,6 +400,184 @@ struct InvalidMoveIndicator: View {
                 shakeOffset = 0
             }
         }
+    }
+}
+
+// MARK: - Grid Accessibility Helpers
+
+extension GridView {
+    func accessibilityDescription() -> String {
+        let currentPos = gameState.currentPosition
+        let target = gameState.currentTarget
+        let visited = gameState.visited.count
+        let total = gridSize * gridSize
+
+        var description = "Grid puzzle, \(visited) of \(total) cells visited. "
+        description += "Current position: row \(currentPos.row + 1), column \(currentPos.col + 1). "
+
+        if let nextNode = gameState.level.numberedCells[target] {
+            description += "Next target: node \(target) at row \(nextNode.row + 1), column \(nextNode.col + 1). "
+        }
+
+        let availableMoves = getAvailableMoves()
+        if !availableMoves.isEmpty {
+            description += "Available moves: \(availableMoves.joined(separator: ", ")). "
+        }
+
+        return description
+    }
+
+    func getAvailableMoves() -> [String] {
+        var moves: [String] = []
+        let current = gameState.currentPosition
+
+        let directions: [(dr: Int, dc: Int, name: String)] = [
+            (-1, 0, "up"),
+            (1, 0, "down"),
+            (0, -1, "left"),
+            (0, 1, "right")
+        ]
+
+        for (dr, dc, name) in directions {
+            let newPoint = GridPoint(row: current.row + dr, col: current.col + dc)
+            if gameState.canVisit(newPoint) {
+                moves.append(name)
+            }
+        }
+
+        return moves
+    }
+
+    func performAccessibilityMove(direction: String) -> Bool {
+        let current = gameState.currentPosition
+        var newPoint: GridPoint?
+
+        switch direction.lowercased() {
+        case "up":
+            newPoint = GridPoint(row: current.row - 1, col: current.col)
+        case "down":
+            newPoint = GridPoint(row: current.row + 1, col: current.col)
+        case "left":
+            newPoint = GridPoint(row: current.row, col: current.col - 1)
+        case "right":
+            newPoint = GridPoint(row: current.row, col: current.col + 1)
+        default:
+            return false
+        }
+
+        guard let point = newPoint, gameState.canVisit(point) else {
+            return false
+        }
+
+        return gameState.visit(point)
+    }
+}
+
+// MARK: - Accessible Grid Wrapper
+
+struct AccessibleGridView: View {
+    @Bindable var gameState: GameState
+    let onInvalidMove: () -> Void
+    var hintCells: [GridPoint] = []
+
+    private var gridDescription: String {
+        let current = gameState.currentPosition
+        let target = gameState.currentTarget
+        return "Puzzle grid. Position row \(current.row + 1), column \(current.col + 1). Target node \(target)."
+    }
+
+    var body: some View {
+        GridView(gameState: gameState, onInvalidMove: onInvalidMove, hintCells: hintCells)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(gridDescription)
+            .accessibilityHint("Swipe in any direction to move, or double tap to hear available moves")
+            .accessibilityAction(named: "Move Up") {
+                performMove("up")
+            }
+            .accessibilityAction(named: "Move Down") {
+                performMove("down")
+            }
+            .accessibilityAction(named: "Move Left") {
+                performMove("left")
+            }
+            .accessibilityAction(named: "Move Right") {
+                performMove("right")
+            }
+            .accessibilityAction(named: "Undo Move") {
+                gameState.undo()
+            }
+            .accessibilityAction(named: "Available Moves") {
+                announceAvailableMoves()
+            }
+    }
+
+    private func performMove(_ direction: String) {
+        let current = gameState.currentPosition
+        var newPoint: GridPoint?
+
+        switch direction {
+        case "up":
+            newPoint = GridPoint(row: current.row - 1, col: current.col)
+        case "down":
+            newPoint = GridPoint(row: current.row + 1, col: current.col)
+        case "left":
+            newPoint = GridPoint(row: current.row, col: current.col - 1)
+        case "right":
+            newPoint = GridPoint(row: current.row, col: current.col + 1)
+        default:
+            return
+        }
+
+        guard let point = newPoint else { return }
+
+        if gameState.canVisit(point) {
+            gameState.visit(point)
+            announcePosition()
+        } else {
+            onInvalidMove()
+            UIAccessibility.post(notification: .announcement, argument: "Cannot move \(direction)")
+        }
+    }
+
+    private func announcePosition() {
+        let current = gameState.currentPosition
+        let visited = gameState.visited.count
+        let total = gameState.level.size * gameState.level.size
+
+        var message = "Moved to row \(current.row + 1), column \(current.col + 1). "
+        message += "\(visited) of \(total) cells visited. "
+
+        if let number = gameState.level.numberAt(current) {
+            message += "Reached node \(number). "
+            if number == gameState.level.maxNumber && gameState.isComplete {
+                message += "Puzzle complete!"
+            }
+        }
+
+        UIAccessibility.post(notification: .announcement, argument: message)
+    }
+
+    private func announceAvailableMoves() {
+        var moves: [String] = []
+        let current = gameState.currentPosition
+
+        let directions: [(dr: Int, dc: Int, name: String)] = [
+            (-1, 0, "up"), (1, 0, "down"), (0, -1, "left"), (0, 1, "right")
+        ]
+
+        for (dr, dc, name) in directions {
+            let newPoint = GridPoint(row: current.row + dr, col: current.col + dc)
+            if gameState.canVisit(newPoint) {
+                if let num = gameState.level.numberAt(newPoint) {
+                    moves.append("\(name) to node \(num)")
+                } else {
+                    moves.append(name)
+                }
+            }
+        }
+
+        let message = moves.isEmpty ? "No moves available" : "Available: \(moves.joined(separator: ", "))"
+        UIAccessibility.post(notification: .announcement, argument: message)
     }
 }
 

@@ -48,6 +48,17 @@ struct SettingsView: View {
                     Text("Audio & Feedback")
                 }
 
+                // MARK: - Accessibility
+                Section {
+                    Toggle(isOn: $settings.highContrastMode) {
+                        Label("High Contrast", systemImage: "circle.lefthalf.filled")
+                    }
+                } header: {
+                    Text("Accessibility")
+                } footer: {
+                    Text("Uses bolder lines and stronger colors for better visibility. Reduce Motion and Reduce Transparency follow your system settings.")
+                }
+
                 // MARK: - Appearance
                 Section {
                     NavigationLink {

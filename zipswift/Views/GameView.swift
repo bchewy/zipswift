@@ -199,7 +199,7 @@ struct GameView: View {
 
                 // Game grid with swipe to collapse/expand and double-tap to restart
                 if !isGridCollapsed {
-                    GridView(
+                    AccessibleGridView(
                         gameState: gameState,
                         onInvalidMove: triggerInvalidMoveHaptic,
                         hintCells: hintCells
@@ -280,6 +280,9 @@ struct GameView: View {
                     }
                     .disabled(gameState.path.count <= 1)
                     .opacity(gameState.path.count <= 1 ? 0.5 : 1.0)
+                    .accessibilityLabel("Undo")
+                    .accessibilityHint(gameState.path.count > 1 ? "Tap to undo last move, \(gameState.path.count - 1) moves available" : "No moves to undo")
+                    .accessibilityValue("\(gameState.path.count - 1) moves available")
                     .simultaneousGesture(
                         LongPressGesture(minimumDuration: 0.5)
                             .onEnded { _ in

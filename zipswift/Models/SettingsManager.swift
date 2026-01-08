@@ -55,11 +55,26 @@ class SettingsManager {
     private let audioThemeKey = "settings_audio_theme"
     private let visualThemeKey = "settings_visual_theme"
     private let hasCompletedOnboardingKey = "settings_has_completed_onboarding"
+    private let highContrastModeKey = "settings_high_contrast_mode"
 
     // MARK: - Accessibility
 
     var reduceMotion: Bool {
         UIAccessibility.isReduceMotionEnabled
+    }
+
+    var reduceTransparency: Bool {
+        UIAccessibility.isReduceTransparencyEnabled
+    }
+
+    var isVoiceOverRunning: Bool {
+        UIAccessibility.isVoiceOverRunning
+    }
+
+    var highContrastMode: Bool {
+        didSet {
+            defaults.set(highContrastMode, forKey: highContrastModeKey)
+        }
     }
 
     // MARK: - Sound Settings
@@ -234,6 +249,9 @@ class SettingsManager {
 
         // Load onboarding state
         self.hasCompletedOnboarding = defaults.bool(forKey: hasCompletedOnboardingKey)
+
+        // Load accessibility settings
+        self.highContrastMode = defaults.bool(forKey: highContrastModeKey)
 
         // Load daily challenge settings
         self.dailyStreak = defaults.integer(forKey: dailyStreakKey)
