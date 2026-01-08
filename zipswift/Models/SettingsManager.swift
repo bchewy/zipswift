@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 enum AccentColorOption: String, CaseIterable, Codable {
     case blue = "blue"
@@ -51,6 +52,12 @@ class SettingsManager {
     private let dailyStreakKey = "settings_daily_streak"
     private let lastDailyDateKey = "settings_last_daily_date"
     private let dailyBestTimesKey = "settings_daily_best_times"
+
+    // MARK: - Accessibility
+
+    var reduceMotion: Bool {
+        UIAccessibility.isReduceMotionEnabled
+    }
 
     // MARK: - Sound Settings
 

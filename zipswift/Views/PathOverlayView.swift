@@ -2,7 +2,7 @@
 //  PathOverlayView.swift
 //  zipswift
 //
-//  Draws the active path using SwiftUI Canvas.
+//  Draws the active path using SwiftUI Canvas with animation support.
 //
 
 import SwiftUI
@@ -11,9 +11,17 @@ struct PathOverlayView: View {
     let path: [GridPoint]
     let cellSize: CGFloat
     let gridOrigin: CGPoint
+    var isWinning: Bool = false
+
+    @State private var pathProgress: CGFloat = 1.0
+    @State private var glowOpacity: Double = 0.0
 
     private var pathColor: Color {
         SettingsManager.shared.accentColor.color
+    }
+
+    private var reduceMotion: Bool {
+        SettingsManager.shared.reduceMotion
     }
 
     var body: some View {
@@ -30,8 +38,20 @@ struct PathOverlayView: View {
                 swiftUIPath.addLine(to: point)
             }
 
+            if isWinning && !reduceMotion {
+                context.stroke(
+                    swiftUIPath,
+                    with: .color(pathColor.opacity(glowOpacity * 0.5)),
+                    style: StrokeStyle(
+                        lineWidth: 18,
+                        lineCap: .round,
+                        lineJoin: .round
+                    )
+                )
+            }
+
             context.stroke(
-                swiftUIPath,
+                swiftUIPath.trimmedPath(from: 0, to: pathProgress),
                 with: .color(pathColor),
                 style: StrokeStyle(
                     lineWidth: 10,
@@ -39,6 +59,23 @@ struct PathOverlayView: View {
                     lineJoin: .round
                 )
             )
+        }
+        .onChange(of: path.count) { oldCount, newCount in
+            guard !reduceMotion else { return }
+            if newCount > oldCount {
+                withAnimation(.easeOut(duration: 0.15)) {
+                    pathProgress = 1.0
+                }
+            }
+        }
+        .onChange(of: isWinning) { _, winning in
+            if winning && !reduceMotion {
+                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                    glowOpacity = 1.0
+                }
+            } else {
+                glowOpacity = 0.0
+            }
         }
     }
 

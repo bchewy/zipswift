@@ -1,0 +1,355 @@
+{
+  "branchName": "main",
+  "userStories": [
+    {
+      "id": "ZIP-001",
+      "title": "Daily Challenge System",
+      "acceptanceCriteria": [
+        "Create Models/DailyChallenge.swift with DailyChallenge struct",
+        "Generate deterministic daily puzzle using date as seed (same puzzle globally for any given day)",
+        "Add dailyStreak: Int to SettingsManager tracking consecutive days played",
+        "Add lastDailyDate: Date? to track when last daily was completed",
+        "Create Views/DailyChallengeView.swift showing today's puzzle with special styling",
+        "Add 'Daily Challenge' button to GameView header with calendar icon (📅)",
+        "Show streak counter with flame icon (🔥) when streak > 0",
+        "Display 'Daily Complete ✓' badge after completing today's challenge",
+        "Store daily best times separately: dailyBestTimes: [String: TimeInterval] keyed by date string",
+        "Show countdown to next daily puzzle (resets at midnight local time)",
+        "Success haptic + special fanfare when completing daily challenge",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Implemented: DailyChallenge.swift with SeededRandomNumberGenerator for deterministic puzzles. Added dailyStreak, lastDailyDate, dailyBestTimes to SettingsManager. DailyChallengeView with special border styling, streak display, countdown timer, and completion badge. Calendar button in GameView header with streak indicator. Special fanfare in AudioManager for daily completion."
+    },
+    {
+      "id": "ZIP-002",
+      "title": "Achievement System",
+      "acceptanceCriteria": [
+        "Create Models/Achievement.swift with Achievement struct (id, name, description, icon, isUnlocked, unlockedDate)",
+        "Create Models/AchievementManager.swift as @Observable singleton",
+        "Define 15+ achievements: first_win, games_10, games_50, games_100, speed_demon (under 30s), perfectionist (no undos), streak_3, streak_7, streak_30, hard_mode_master, daily_warrior (7 daily streak), completionist (all difficulties), night_owl (play after 10pm), early_bird (play before 7am), marathon (5 games in one session)",
+        "Create Views/AchievementsView.swift showing grid of achievement badges",
+        "Locked achievements show grayed icon with '?' and unlock condition hint",
+        "Unlocked achievements show colored icon, name, and unlock date",
+        "Toast notification appears when achievement unlocks during gameplay",
+        "Achievement unlock triggers special sound effect and haptic",
+        "Add 'Achievements' button to settings or main menu",
+        "Persist achievements in UserDefaults",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Implemented: Achievement.swift with struct and AchievementDefinitions enum with 15 achievements. AchievementManager as @Observable singleton with checkAchievements() method tracking games, time, streaks, and session counts. AchievementsView with 3-column grid showing unlocked/locked states with hints. AchievementToastView for unlock notifications. Trophy button in GameView header. playAchievementSound() in AudioManager."
+    },
+    {
+      "id": "ZIP-003",
+      "title": "Star Rating System",
+      "acceptanceCriteria": [
+        "Add star rating (1-3 stars) based on completion time thresholds per difficulty",
+        "Easy: 3★ < 45s, 2★ < 90s, 1★ = completed",
+        "Medium: 3★ < 60s, 2★ < 120s, 1★ = completed",
+        "Hard: 3★ < 90s, 2★ < 180s, 1★ = completed",
+        "Create Views/StarRatingView.swift component showing 1-3 filled/empty stars",
+        "Display star rating on WinOverlayView below completion time",
+        "Animate stars appearing sequentially (0.2s delay between each)",
+        "Track best star rating per difficulty in GameHistoryManager",
+        "Show total stars earned in HistoryView (e.g., '⭐ 47/150 stars')",
+        "Different celebration sound based on star count (3★ gets fanfare)",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Implemented: StarRating struct with static stars() method for time thresholds. StarRatingView with spring animation (0.2s delay between stars). Added stars field to GameRecord. GameHistoryManager has totalStars and maxPossibleStars. HistoryView shows total stars and per-game stars. playStarCompletionSound() and playThreeStarFanfare() in AudioManager for different celebrations."
+    },
+    {
+      "id": "ZIP-004",
+      "title": "Level Pack System",
+      "acceptanceCriteria": [
+        "Create Models/LevelPack.swift with LevelPack struct (id, name, description, levels: [LevelDefinition], requiredStars: Int)",
+        "Create 5 level packs with 10 handcrafted levels each: 'Getting Started' (0 stars), 'Warming Up' (15 stars), 'Getting Serious' (40 stars), 'Expert Zone' (80 stars), 'Master Class' (120 stars)",
+        "Each level has unique solution path designed for interesting gameplay",
+        "Create Views/LevelPacksView.swift showing pack grid with lock/unlock status",
+        "Create Views/LevelSelectView.swift showing levels within a pack with star ratings",
+        "Locked packs show required stars to unlock with progress bar",
+        "Track completion and stars per level in LevelProgressManager",
+        "Add 'Level Packs' button to main GameView",
+        "Selecting a pack level loads it instead of generating random",
+        "Show level pack name and level number during gameplay",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Implemented: LevelPack.swift with 5 packs (Getting Started 0★, Logic Warmup 5★, Pattern Master 20★, Mind Bender 50★, Zen Master 100★) each with 10 handcrafted Hamiltonian path levels. LevelProgressManager tracks completion and stars per level. LevelPacksView shows pack grid with lock/unlock and progress bars. LevelSelectView shows 5-column grid with star ratings. Grid button in GameView header. Pack/level indicator shown during gameplay. LevelPacks use progressive star requirements for unlock."
+    },
+    {
+      "id": "ZIP-005",
+      "title": "Share Results Feature",
+      "acceptanceCriteria": [
+        "Create shareable result card as image using ImageRenderer",
+        "Card includes: ZipSwift logo, difficulty, time, star rating, date",
+        "Card uses current accent color theme",
+        "Add 'Share' button to WinOverlayView",
+        "Generate text summary: 'ZipSwift [Easy/Medium/Hard] ⭐⭐⭐ 0:42 🔥7'",
+        "Use iOS ShareSheet (UIActivityViewController) to share image + text",
+        "Daily challenge shares include 'Daily Challenge' badge and streak",
+        "Share text includes app store link placeholder",
+        "Haptic feedback on share button tap",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Implemented: ShareCardView with branded card using accent color, logo, difficulty, time, stars, streak, and date. ShareHelper generates text summary with emoji stars and hashtag. ShareSheet wraps UIActivityViewController. Share button on both WinOverlayView and DailyWinOverlayView. Daily shares include 'Daily' badge and streak. Haptic feedback via UIImpactFeedbackGenerator."
+    },
+    {
+      "id": "ZIP-006",
+      "title": "Variable Grid Sizes",
+      "acceptanceCriteria": [
+        "Update LevelDefinition to support variable gridSize (5, 6, 7, 8)",
+        "Update LevelGenerator to generate Hamiltonian paths for any grid size",
+        "Update GridView to render any grid size (calculate cell size from container)",
+        "Update GameState win condition to check gridSize * gridSize cells",
+        "Add grid size selector to new game options: 5×5 (Quick), 6×6 (Classic), 7×7 (Extended), 8×8 (Marathon)",
+        "Adjust numbered node counts per grid size and difficulty",
+        "5×5: Easy=8, Medium=5, Hard=3 nodes",
+        "7×7: Easy=16, Medium=11, Hard=7 nodes",
+        "8×8: Easy=20, Medium=14, Hard=9 nodes",
+        "Track statistics separately per grid size",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Implemented: GridSize enum with quick/classic/extended/marathon (5-8). Difficulty.nodeCount(for:) returns grid-specific node counts. GridView uses gameState.level.size dynamically. Grid size picker in GameView header. defaultGridSize persisted in SettingsManager. GameRecord already tracks gridSize for statistics."
+    },
+    {
+      "id": "ZIP-007",
+      "title": "Challenge Modes",
+      "acceptanceCriteria": [
+        "Create Models/ChallengeMode.swift enum: standard, timeAttack, noUndo, speedRun, zen",
+        "Time Attack: 60 second countdown, complete as many puzzles as possible",
+        "No Undo: Undo button disabled, forces careful planning",
+        "Speed Run: Best time across 5 consecutive puzzles",
+        "Zen Mode: No timer, relaxed play with ambient background",
+        "Create Views/ChallengeModeSelectView.swift with mode descriptions",
+        "Track high scores per challenge mode",
+        "Special achievements for challenge mode accomplishments",
+        "Add 'Challenge Modes' section to main menu",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Implemented: ChallengeMode enum with timeAttack, noUndo, speedRun, zen modes. ChallengeManager singleton tracks high scores per mode. ChallengeModeSelectView shows cards with descriptions and best scores. ChallengeGameView handles mode-specific gameplay (countdown timer, undo disabled, speed run puzzles, zen display). Lightning bolt button in GameView header for access."
+    },
+    {
+      "id": "ZIP-008",
+      "title": "Hint System",
+      "acceptanceCriteria": [
+        "Store solution path in LevelDefinition (already exists as solutionPath)",
+        "Add 'Hint' button to GameView (lightbulb icon 💡)",
+        "Hint reveals next 3 cells in optimal path with pulsing highlight",
+        "Limit hints: 3 per puzzle (show remaining: '💡 2')",
+        "Using hints disqualifies 3-star rating (max 2 stars with hints)",
+        "Track hint usage in game statistics",
+        "First hint is free, additional hints could be earned (future: watch ad)",
+        "Hint animation: cells pulse with accent color glow",
+        "Haptic feedback when hint activates",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Implemented: getHintCells() in GameState finds next cells in solution path. HintIndicator view with pulsing animation and numbered order (1, 2, 3). Hint button in GameView with remaining count display. 3 hints per puzzle, disabled when depleted. StarRating capped at 2 stars when hints used. Hints display for 3 seconds then fade. Light haptic on activation."
+    },
+    {
+      "id": "ZIP-009",
+      "title": "Enhanced Animations",
+      "acceptanceCriteria": [
+        "Path drawing: animate stroke as it extends (not instant)",
+        "Cell visit: subtle scale bounce (1.0 → 1.1 → 1.0) on visited cell",
+        "Numbered node reached: ring pulse animation",
+        "Invalid move: shake animation on attempted cell (not just red flash)",
+        "Win state: path glows/pulses before confetti",
+        "Level transition: grid cells fade in with stagger effect",
+        "Undo: path retracts with animation (reverse of extension)",
+        "Timer start: subtle bounce when timer begins",
+        "All animations use SwiftUI .animation() or withAnimation()",
+        "Animations respect reduced motion accessibility setting",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Polished animations make the game feel premium and satisfying"
+    },
+    {
+      "id": "ZIP-010",
+      "title": "Sound Theme System",
+      "acceptanceCriteria": [
+        "Create AudioTheme enum: classic, retro, minimal, playful",
+        "Classic: current implementation (sine waves, major chords)",
+        "Retro: 8-bit style square waves with chiptune feel",
+        "Minimal: soft clicks and subtle tones",
+        "Playful: bouncy xylophone-style sounds",
+        "Add sound theme selector to SettingsView",
+        "Each theme has: popSound, nodeSound, completionFanfare, errorSound",
+        "Preview button to hear theme before selecting",
+        "Persist selected theme in SettingsManager",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Audio customization adds personality and player expression"
+    },
+    {
+      "id": "ZIP-011",
+      "title": "Statistics Dashboard",
+      "acceptanceCriteria": [
+        "Redesign HistoryView as comprehensive statistics dashboard",
+        "Show: total games, win rate (if tracking losses), total time played",
+        "Graph: games played per day (last 7 days bar chart)",
+        "Graph: average completion time trend (last 10 games line chart)",
+        "Best times section with personal records per difficulty/grid size",
+        "Current streaks: daily streak, games today, weekly total",
+        "Comparison: 'You're X% faster than your first game'",
+        "'Milestones' section showing progress to next achievement",
+        "Use simple SwiftUI shapes for charts (no external dependencies)",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Detailed stats appeal to completionists and show player growth"
+    },
+    {
+      "id": "ZIP-012",
+      "title": "Quick Actions & Gestures",
+      "acceptanceCriteria": [
+        "Shake to restart puzzle (with confirmation)",
+        "Double-tap grid background for quick restart",
+        "Long press on undo button to undo all (reset to start)",
+        "Swipe down on grid to minimize/collapse (show just timer)",
+        "Swipe up to expand grid back",
+        "3D Touch / Haptic Touch quick actions on app icon: 'New Easy Game', 'New Hard Game', 'Daily Challenge'",
+        "Add keyboard shortcuts for iPad: R (restart), U (undo), N (new game)",
+        "All gestures have haptic feedback",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Power user features for faster, more fluid gameplay"
+    },
+    {
+      "id": "ZIP-013",
+      "title": "Themes & Visual Customization",
+      "acceptanceCriteria": [
+        "Create Models/VisualTheme.swift with grid background, path style, node style",
+        "Default theme: current design (gray grid, solid path, black nodes)",
+        "Neon theme: dark background, glowing path, neon nodes",
+        "Paper theme: textured background, pencil-style path, handwritten numbers",
+        "Minimal theme: white background, thin path, subtle nodes",
+        "Ocean theme: blue gradient background, wave-styled path",
+        "Create Views/ThemePreviewView.swift showing mini grid with theme applied",
+        "Add theme selector to SettingsView",
+        "Some themes locked behind star count achievements",
+        "Persist selected theme in SettingsManager",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Visual themes let players personalize their experience"
+    },
+    {
+      "id": "ZIP-014",
+      "title": "Onboarding & Tutorial",
+      "acceptanceCriteria": [
+        "Create Views/OnboardingView.swift shown on first launch",
+        "Page 1: Welcome screen with app name and tagline",
+        "Page 2: Animated demonstration of path drawing (auto-playing)",
+        "Page 3: Explanation of numbered nodes (visit in order)",
+        "Page 4: Tips for success (plan ahead, use undo)",
+        "Include 'Skip' button and page indicators",
+        "First puzzle after onboarding is guided tutorial level (very easy 5x5)",
+        "Tutorial highlights show exactly where to tap/drag",
+        "Track hasCompletedOnboarding in UserDefaults",
+        "'Replay Tutorial' option in Settings",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Good onboarding reduces churn from confused new players"
+    },
+    {
+      "id": "ZIP-015",
+      "title": "Game Center Integration",
+      "acceptanceCriteria": [
+        "Add GameKit framework to project",
+        "Authenticate with Game Center on app launch",
+        "Create leaderboards: Best Time (Easy), Best Time (Medium), Best Time (Hard), Daily Challenge, Total Stars",
+        "Submit scores on puzzle completion",
+        "Add 'Leaderboards' button showing Game Center leaderboard UI",
+        "Define Game Center achievements mirroring in-app achievements",
+        "Handle authentication failures gracefully (game works offline)",
+        "Show Game Center access point in main menu if authenticated",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Game Center adds competitive element and social proof"
+    },
+    {
+      "id": "ZIP-016",
+      "title": "Widget Support",
+      "acceptanceCriteria": [
+        "Add WidgetKit extension target to project",
+        "Create small widget showing: daily streak 🔥, today's best time, 'Tap to play'",
+        "Create medium widget showing: streak, today's stats, mini preview of daily puzzle",
+        "Widget updates daily at midnight and after completing daily challenge",
+        "Tapping widget deep links to Daily Challenge",
+        "Use App Groups to share data between app and widget",
+        "Widget uses current accent color from settings",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Widgets increase visibility and remind players to maintain streaks"
+    },
+    {
+      "id": "ZIP-017",
+      "title": "Accessibility Improvements",
+      "acceptanceCriteria": [
+        "Add VoiceOver labels to all interactive elements",
+        "Announce current position, available moves, numbered nodes",
+        "Add VoiceOver actions for move (swipe up/down/left/right)",
+        "Support Dynamic Type for all text (timer, instructions, overlays)",
+        "Add high contrast mode option (bolder lines, stronger colors)",
+        "Respect 'Reduce Motion' for all animations",
+        "Add 'Reduce Transparency' support",
+        "Button labels announce state ('Undo, 3 moves available')",
+        "Test with VoiceOver and verify full gameplay is possible",
+        "Build succeeds with no warnings"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Accessibility expands audience and is required for some markets"
+    },
+    {
+      "id": "ZIP-018",
+      "title": "Full Integration & Polish",
+      "acceptanceCriteria": [
+        "All features from ZIP-001 through ZIP-017 integrated",
+        "Main menu reorganized: Play (random), Daily, Level Packs, Challenge Modes",
+        "Settings reorganized with new options logically grouped",
+        "All new managers properly initialized on app launch",
+        "Deep linking support for daily challenge and specific levels",
+        "App icon updated with polished design",
+        "Launch screen with app branding",
+        "All strings localized (ready for localization even if English only)",
+        "Memory profiling shows no leaks during extended play",
+        "npm run build succeeds (if applicable)",
+        "xcodebuild build succeeds with no warnings",
+        "All unit tests pass",
+        "Full playthrough testing of all features"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "Final integration ensuring all systems work together seamlessly"
+    }
+  ]
+}

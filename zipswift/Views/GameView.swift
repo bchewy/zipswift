@@ -524,10 +524,24 @@ struct GameView: View {
 struct TimerView: View {
     let elapsedTime: TimeInterval
 
+    @State private var timerScale: CGFloat = 1.0
+    @State private var hasAnimatedStart = false
+
+    private var reduceMotion: Bool {
+        SettingsManager.shared.reduceMotion
+    }
+
     var body: some View {
         Text(formattedTime)
             .font(.system(size: 32, weight: .medium, design: .monospaced))
             .foregroundColor(.primary)
+            .scaleEffect(timerScale)
+            .onChange(of: elapsedTime) { oldTime, newTime in
+                if oldTime == 0 && newTime > 0 && !hasAnimatedStart && !reduceMotion {
+                    hasAnimatedStart = true
+                    animateTimerStart()
+                }
+            }
     }
 
     private var formattedTime: String {
@@ -535,6 +549,17 @@ struct TimerView: View {
         let minutes = totalSeconds / 60
         let seconds = totalSeconds % 60
         return String(format: "%02d:%02d", minutes, seconds)
+    }
+
+    private func animateTimerStart() {
+        withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+            timerScale = 1.15
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
+                timerScale = 1.0
+            }
+        }
     }
 }
 

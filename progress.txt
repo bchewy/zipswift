@@ -1,0 +1,223 @@
+## Codebase Patterns
+- Models use @Observable macro (iOS 17+) for reactive state
+- Singletons follow pattern: `static let shared = ClassName()` with private init
+- UserDefaults persistence with keys defined as private constants
+- Views use SettingsManager.shared for accessing user preferences
+- Audio uses AVAudioEngine with programmatic tone synthesis
+
+---
+
+## 2026-01-09 - ZIP-001
+
+### What was implemented
+- Daily Challenge System with deterministic puzzle generation using date-based seed
+- SeededRandomNumberGenerator struct for reproducible randomness
+- Streak tracking with consecutive day detection
+- Daily best times storage keyed by date string
+- DailyChallengeView with special styling (accent color border)
+- Countdown timer to next daily puzzle
+- Special fanfare sound for daily completion
+
+### Files changed
+- zipswift/Models/DailyChallenge.swift (new)
+- zipswift/Views/DailyChallengeView.swift (new)
+- zipswift/Models/SettingsManager.swift (added daily streak, lastDailyDate, dailyBestTimes)
+- zipswift/Views/GameView.swift (added Daily Challenge button with streak indicator)
+- zipswift/Audio/AudioManager.swift (added playDailyCompletionSound)
+
+### Learnings
+- Used SeededRandomNumberGenerator with LCG algorithm for deterministic daily puzzles
+- Streak logic: increment if last completion was yesterday, reset if not today
+- Used .fullScreenCover for DailyChallengeView to make it feel like a special mode
+- Reused ConfettiView from WinOverlayView for celebration
+- Calendar.current.startOfDay(for:) for consistent date comparisons
+
+---
+
+## 2026-01-09 - ZIP-002
+
+### What was implemented
+- Achievement system with 15 achievements covering games, time, streaks, and play patterns
+- AchievementManager as @Observable singleton for state management
+- AchievementsView with 3-column grid of badges
+- Locked achievements show '?' with unlock hint, unlocked show icon + date
+- AchievementToastView for animated notifications on unlock
+- Special achievement unlock sound
+- Trophy button in GameView header
+
+### Files changed
+- zipswift/Models/Achievement.swift (new)
+- zipswift/Models/AchievementManager.swift (new)
+- zipswift/Views/AchievementsView.swift (new with AchievementBadgeView and AchievementToastView)
+- zipswift/Views/GameView.swift (added achievements button, toast, and checkAchievements call)
+- zipswift/Audio/AudioManager.swift (added playAchievementSound)
+
+### Learnings
+- Used separate struct for Achievement and enum for AchievementDefinitions to separate data from definitions
+- Track undoUsedThisGame state to detect perfectionist achievement
+- Check hour with Calendar.current.component(.hour, from: Date()) for time-based achievements
+- Session game count resets on app launch but persists during session
+- Merge saved achievements with definitions to handle new achievements added later
+
+---
+
+## 2026-01-09 - ZIP-003
+
+### What was implemented
+- Star rating system with 1-3 stars based on completion time thresholds
+- StarRatingView component with animated star appearance
+- StarRating struct for calculating stars per difficulty
+- Stars field added to GameRecord with auto-calculation
+- Total stars tracking in GameHistoryManager
+- Stars display in HistoryView (total and per-game)
+- Different celebration sounds based on star count
+
+### Files changed
+- zipswift/Views/StarRatingView.swift (new)
+- zipswift/Views/WinOverlayView.swift (added difficulty param and star display)
+- zipswift/Views/GameView.swift (pass difficulty to WinOverlay, use star-based sounds)
+- zipswift/Views/HistoryView.swift (added total stars display and per-record stars)
+- zipswift/Models/GameRecord.swift (added stars field)
+- zipswift/Models/GameHistoryManager.swift (added star statistics methods)
+- zipswift/Audio/AudioManager.swift (added playThreeStarFanfare, playStarCompletionSound)
+
+### Learnings
+- Keep StarRating calculation in a reusable struct for consistency across views
+- Added optional stars param to GameRecord init with auto-calculation fallback
+- Use .spring() animation with delay for sequential star appearance
+- Extended fanfare for 3-star uses higher notes (up to C7) for more celebratory effect
+
+---
+
+## 2026-01-09 - ZIP-004
+
+### What was implemented
+- Level Pack system with 5 packs containing 10 handcrafted levels each
+- LevelPack struct with id, name, description, levels, and requiredStars
+- LevelProgressManager singleton for tracking completion and stars per level
+- LevelPacksView showing pack grid with lock/unlock status and progress bars
+- LevelSelectView showing 5-column grid of level buttons with star ratings
+- Pack/level indicator shown during gameplay
+- Grid button in GameView header for accessing level packs
+
+### Files changed
+- zipswift/Models/LevelPack.swift (new - LevelPack struct + LevelPacks with 5 packs)
+- zipswift/Models/LevelProgressManager.swift (new - progress tracking singleton)
+- zipswift/Views/LevelPacksView.swift (new - pack selection with LevelPackCard)
+- zipswift/Views/LevelSelectView.swift (new - level selection with LevelButton)
+- zipswift/Views/GameView.swift (added Level Packs button, sheet, loadPackLevel, pack indicator)
+
+### Learnings
+- Each handcrafted level needs valid Hamiltonian path (visits all 36 cells exactly once)
+- Use GridPoint for coordinates, numberedCells maps GridPoint to Int for node placement
+- Pack progress stored in UserDefaults with key format "packId_level_levelIndex"
+- LevelPack already conforms to Identifiable in model - don't redeclare in view
+- Progressive star requirements (0, 5, 20, 50, 100) create unlocking progression
+- Show pack/level indicator only when playing pack level (currentPackId != nil)
+- Clear pack tracking in generateNewGame() to distinguish random vs pack games
+
+---
+
+## 2026-01-09 - ZIP-005
+
+### What was implemented
+- Share Results feature with shareable card image and text
+- ShareCardView renders branded result card with accent color theming
+- ShareHelper generates text summary and image using ImageRenderer
+- Share button on WinOverlayView and DailyWinOverlayView
+- ShareSheet wraps UIActivityViewController for iOS sharing
+- Daily challenges show "Daily" badge and streak in share card
+- Haptic feedback on share button tap
+
+### Files changed
+- zipswift/Views/ShareCardView.swift (new - ShareCardView and ShareHelper)
+- zipswift/Views/WinOverlayView.swift (added Share button, ShareSheet, isDaily/dailyStreak params)
+- zipswift/Views/DailyChallengeView.swift (added Share button to DailyWinOverlayView)
+
+### Learnings
+- ImageRenderer creates UIImage from SwiftUI views for sharing
+- Use fixed scale (3.0) instead of deprecated UIScreen.main.scale
+- ShareSheet wraps UIActivityViewController as UIViewControllerRepresentable
+- Added optional isDaily and dailyStreak params with defaults to WinOverlayView
+- Daily challenges use .medium difficulty for star calculation in share
+
+---
+
+## 2026-01-09 - ZIP-006
+
+### What was implemented
+- Variable grid sizes (5×5, 6×6, 7×7, 8×8)
+- GridSize enum with quick/classic/extended/marathon options
+- Difficulty node counts adjusted per grid size
+- Grid size picker in GameView header
+- GridView dynamically renders any grid size
+- defaultGridSize persisted in SettingsManager
+
+### Files changed
+- zipswift/Models/LevelGenerator.swift (added GridSize enum, nodeCount(for:) method)
+- zipswift/Models/SettingsManager.swift (added defaultGridSize property)
+- zipswift/Models/GameRecord.swift (removed redundant Codable extension)
+- zipswift/Views/GameView.swift (added currentGridSize, grid size picker)
+- zipswift/Views/GridView.swift (gridSize now uses gameState.level.size)
+
+### Learnings
+- LevelDefinition already supported variable size, just needed to expose it via UI
+- GridView's gridSize was hardcoded to 6, made it a computed property from gameState
+- Difficulty enum changed to String rawValue for simpler Codable conformance
+- Node counts per grid size follow pattern: more nodes for larger grids to maintain guidance level
+
+---
+
+## 2026-01-09 - ZIP-007
+
+### What was implemented
+- Challenge modes system with 4 different gameplay modes
+- Time Attack: 60-second countdown, complete as many puzzles as possible
+- No Undo: Undo button disabled, forces careful planning
+- Speed Run: Best total time across 5 consecutive puzzles
+- Zen Mode: No timer, relaxed play with leaf icon display
+- ChallengeManager singleton for high score tracking per mode
+- ChallengeModeSelectView with mode cards and best scores
+- ChallengeGameView with mode-specific timer and controls
+
+### Files changed
+- zipswift/Models/ChallengeMode.swift (new - enum, ChallengeScore, ChallengeManager)
+- zipswift/Views/ChallengeModeSelectView.swift (new - mode selection with cards)
+- zipswift/Views/ChallengeGameView.swift (new - gameplay for challenge modes)
+- zipswift/Views/GameView.swift (added showChallengeModes, activeChallengeMode, bolt button)
+
+### Learnings
+- ChallengeMode conforms to Identifiable for .fullScreenCover(item:) binding
+- Speed Run compares by minimum time (lower is better)
+- Zen mode shows leaf icon instead of timer for relaxed feel
+- Time Attack countdown uses remainingTime, others use elapsedTime
+- Challenge results stored with mode-specific scoring
+
+---
+
+## 2026-01-09 - ZIP-008
+
+### What was implemented
+- Hint system with 3 hints per puzzle showing next cells in solution path
+- getHintCells() method in GameState finds next unvisited cells from solutionPath
+- HintIndicator view with pulsing animation and numbered order display
+- Hint button with remaining count shown in GameView
+- Hints display for 3 seconds then fade out automatically
+- StarRating capped at 2 stars when any hints are used
+- Light haptic feedback on hint activation
+
+### Files changed
+- zipswift/Models/GameState.swift (added getHintCells method)
+- zipswift/Views/GridView.swift (added hintCells param, HintIndicator view)
+- zipswift/Views/GameView.swift (added hint state, button, activateHint function)
+- zipswift/Views/StarRatingView.swift (added hintsUsed param to stars() method)
+
+### Learnings
+- Solution path stored in LevelDefinition makes hint system straightforward
+- Find current position in solutionPath, return next N unvisited cells
+- Pulsing animation uses repeatForever with autoreverses for smooth effect
+- Stagger hint indicator animations with delay based on order
+- Default parameter hintsUsed=0 preserves backward compatibility for existing callers
+- Reset hints in both generateNewGame() and loadPackLevel() for consistency
+
+---

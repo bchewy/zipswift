@@ -16,6 +16,8 @@ struct GridView: View {
     @State private var lastVisitedDuringDrag: GridPoint?
     @State private var dragStartPoint: GridPoint?
     @State private var hasMoved: Bool = false
+    @State private var recentlyVisitedCell: GridPoint?
+    @State private var recentlyReachedNode: Int?
 
     private var gridSize: Int { gameState.level.size }
     private let gridPadding: CGFloat = 8
@@ -42,8 +44,18 @@ struct GridView: View {
                 PathOverlayView(
                     path: gameState.path,
                     cellSize: cellSize,
-                    gridOrigin: gridOrigin
+                    gridOrigin: gridOrigin,
+                    isWinning: gameState.isComplete
                 )
+
+                // Cell visit bounce indicator
+                if let visitedCell = recentlyVisitedCell {
+                    CellVisitIndicator(
+                        point: visitedCell,
+                        cellSize: cellSize,
+                        gridOrigin: gridOrigin
+                    )
+                }
 
                 // Hint indicators
                 ForEach(Array(hintCells.enumerated()), id: \.offset) { index, hintPoint in
@@ -68,10 +80,12 @@ struct GridView: View {
                 ForEach(Array(gameState.level.numberedCells.keys), id: \.self) { number in
                     if let point = gameState.level.numberedCells[number] {
                         let isActive = number == gameState.currentTarget
+                        let wasJustReached = recentlyReachedNode == number
                         NumberNodeView(
                             number: number,
                             isActive: isActive,
-                            cellSize: cellSize
+                            cellSize: cellSize,
+                            wasJustReached: wasJustReached
                         )
                         .position(centerForCell(point, cellSize: cellSize, origin: gridOrigin))
                     }
@@ -118,8 +132,14 @@ struct GridView: View {
 
         // Check if this is a valid move (for drawing path)
         if gameState.canVisit(point) {
+            let previousTarget = gameState.currentTarget
             gameState.visit(point)
             lastVisitedDuringDrag = point
+            triggerCellVisitAnimation(at: point)
+
+            if gameState.currentTarget > previousTarget {
+                triggerNodeReachedAnimation(node: previousTarget)
+            }
         } else if point.isAdjacent(to: gameState.currentPosition) && !gameState.visited.contains(point) {
             // Invalid move attempt (e.g., wrong numbered cell)
             showInvalidMove(at: point)
@@ -175,10 +195,29 @@ struct GridView: View {
         onInvalidMove()
         invalidMovePoint = point
 
-        // Remove the indicator after 150ms
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             if self.invalidMovePoint == point {
                 self.invalidMovePoint = nil
+            }
+        }
+    }
+
+    private func triggerCellVisitAnimation(at point: GridPoint) {
+        recentlyVisitedCell = point
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            if self.recentlyVisitedCell == point {
+                self.recentlyVisitedCell = nil
+            }
+        }
+    }
+
+    private func triggerNodeReachedAnimation(node: Int) {
+        recentlyReachedNode = node
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            if self.recentlyReachedNode == node {
+                self.recentlyReachedNode = nil
             }
         }
     }
@@ -213,6 +252,47 @@ struct GridLinesView: View {
                 context.stroke(path, with: .color(lineColor), lineWidth: 1)
             }
         }
+    }
+}
+
+// MARK: - Cell Visit Indicator
+
+struct CellVisitIndicator: View {
+    let point: GridPoint
+    let cellSize: CGFloat
+    let gridOrigin: CGPoint
+
+    @State private var scale: CGFloat = 1.0
+    @State private var opacity: Double = 0.8
+
+    private var accentColor: Color { SettingsManager.shared.accentColor.color }
+
+    private var reduceMotion: Bool {
+        SettingsManager.shared.reduceMotion
+    }
+
+    var body: some View {
+        Circle()
+            .fill(accentColor.opacity(opacity * 0.3))
+            .frame(width: cellSize * 0.5, height: cellSize * 0.5)
+            .scaleEffect(scale)
+            .position(
+                x: gridOrigin.x + CGFloat(point.col) * cellSize + cellSize / 2,
+                y: gridOrigin.y + CGFloat(point.row) * cellSize + cellSize / 2
+            )
+            .onAppear {
+                if !reduceMotion {
+                    withAnimation(.spring(response: 0.15, dampingFraction: 0.5)) {
+                        scale = 1.3
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        withAnimation(.easeOut(duration: 0.15)) {
+                            scale = 1.0
+                            opacity = 0.0
+                        }
+                    }
+                }
+            }
     }
 }
 
@@ -266,14 +346,47 @@ struct InvalidMoveIndicator: View {
     let cellSize: CGFloat
     let gridOrigin: CGPoint
 
+    @State private var shakeOffset: CGFloat = 0
+
+    private var reduceMotion: Bool {
+        SettingsManager.shared.reduceMotion
+    }
+
     var body: some View {
         Rectangle()
             .fill(Color.red.opacity(0.5))
             .frame(width: cellSize - 4, height: cellSize - 4)
+            .offset(x: shakeOffset)
             .position(
                 x: gridOrigin.x + CGFloat(point.col) * cellSize + cellSize / 2,
                 y: gridOrigin.y + CGFloat(point.row) * cellSize + cellSize / 2
             )
+            .onAppear {
+                if !reduceMotion {
+                    animateShake()
+                }
+            }
+    }
+
+    private func animateShake() {
+        withAnimation(.linear(duration: 0.05)) {
+            shakeOffset = 6
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            withAnimation(.linear(duration: 0.05)) {
+                shakeOffset = -6
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.linear(duration: 0.05)) {
+                shakeOffset = 4
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            withAnimation(.linear(duration: 0.05)) {
+                shakeOffset = 0
+            }
+        }
     }
 }
 
