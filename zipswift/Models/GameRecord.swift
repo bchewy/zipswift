@@ -57,29 +57,3 @@ struct GameRecord: Identifiable, Codable, Equatable {
     }
 }
 
-// Make Difficulty codable for storage
-extension Difficulty: Codable {
-    enum CodingKeys: String, CodingKey {
-        case rawValue
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let rawValue = try container.decode(String.self)
-        switch rawValue {
-        case "easy": self = .easy
-        case "medium": self = .medium
-        case "hard": self = .hard
-        default: self = .medium
-        }
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        switch self {
-        case .easy: try container.encode("easy")
-        case .medium: try container.encode("medium")
-        case .hard: try container.encode("hard")
-        }
-    }
-}

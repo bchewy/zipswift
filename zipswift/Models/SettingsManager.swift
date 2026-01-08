@@ -47,6 +47,7 @@ class SettingsManager {
     private let accentColorKey = "settings_accent_color"
     private let showBestTimeKey = "settings_show_best_time"
     private let defaultDifficultyKey = "settings_default_difficulty"
+    private let defaultGridSizeKey = "settings_default_grid_size"
     private let dailyStreakKey = "settings_daily_streak"
     private let lastDailyDateKey = "settings_last_daily_date"
     private let dailyBestTimesKey = "settings_daily_best_times"
@@ -85,13 +86,13 @@ class SettingsManager {
 
     var defaultDifficulty: Difficulty {
         didSet {
-            let value: String
-            switch defaultDifficulty {
-            case .easy: value = "easy"
-            case .medium: value = "medium"
-            case .hard: value = "hard"
-            }
-            defaults.set(value, forKey: defaultDifficultyKey)
+            defaults.set(defaultDifficulty.rawValue, forKey: defaultDifficultyKey)
+        }
+    }
+
+    var defaultGridSize: GridSize {
+        didSet {
+            defaults.set(defaultGridSize.rawValue, forKey: defaultGridSizeKey)
         }
     }
 
@@ -168,14 +169,19 @@ class SettingsManager {
         }
 
         // Load default difficulty
-        if let diffString = defaults.string(forKey: defaultDifficultyKey) {
-            switch diffString {
-            case "easy": self.defaultDifficulty = .easy
-            case "hard": self.defaultDifficulty = .hard
-            default: self.defaultDifficulty = .medium
-            }
+        if let diffString = defaults.string(forKey: defaultDifficultyKey),
+           let diff = Difficulty(rawValue: diffString) {
+            self.defaultDifficulty = diff
         } else {
             self.defaultDifficulty = .medium
+        }
+
+        // Load default grid size
+        if let sizeInt = defaults.object(forKey: defaultGridSizeKey) as? Int,
+           let gridSize = GridSize(rawValue: sizeInt) {
+            self.defaultGridSize = gridSize
+        } else {
+            self.defaultGridSize = .classic
         }
 
         // Load daily challenge settings
@@ -198,6 +204,7 @@ class SettingsManager {
         accentColor = .blue
         showBestTime = true
         defaultDifficulty = .medium
+        defaultGridSize = .classic
     }
 }
 

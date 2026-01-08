@@ -16,7 +16,7 @@ struct GridView: View {
     @State private var dragStartPoint: GridPoint?
     @State private var hasMoved: Bool = false
 
-    private let gridSize = 6
+    private var gridSize: Int { gameState.level.size }
     private let gridPadding: CGFloat = 8
 
     var body: some View {

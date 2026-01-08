@@ -7,17 +7,55 @@
 
 import Foundation
 
-enum Difficulty {
-    case easy    // More numbered nodes (more guidance)
-    case medium  // Moderate guidance
-    case hard    // Fewer numbered nodes (less guidance)
+enum GridSize: Int, CaseIterable, Codable {
+    case quick = 5
+    case classic = 6
+    case extended = 7
+    case marathon = 8
+
+    var size: Int { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .quick: return "5×5 Quick"
+        case .classic: return "6×6 Classic"
+        case .extended: return "7×7 Extended"
+        case .marathon: return "8×8 Marathon"
+        }
+    }
+
+    var shortName: String {
+        "\(size)×\(size)"
+    }
+}
+
+enum Difficulty: String, CaseIterable, Codable {
+    case easy
+    case medium
+    case hard
+
+    func nodeCount(for gridSize: GridSize) -> Int {
+        switch (self, gridSize) {
+        case (.easy, .quick): return 8
+        case (.medium, .quick): return 5
+        case (.hard, .quick): return 3
+
+        case (.easy, .classic): return 12
+        case (.medium, .classic): return 8
+        case (.hard, .classic): return 5
+
+        case (.easy, .extended): return 16
+        case (.medium, .extended): return 11
+        case (.hard, .extended): return 7
+
+        case (.easy, .marathon): return 20
+        case (.medium, .marathon): return 14
+        case (.hard, .marathon): return 9
+        }
+    }
 
     var nodeCount: Int {
-        switch self {
-        case .easy: return 12
-        case .medium: return 8
-        case .hard: return 5
-        }
+        nodeCount(for: .classic)
     }
 
     var iconName: String {
@@ -118,5 +156,11 @@ struct LevelGenerator {
     /// Generates a level with difficulty-based node count
     static func generateLevel(difficulty: Difficulty, size: Int = 6) -> LevelDefinition {
         return generateLevel(size: size, numberOfNodes: difficulty.nodeCount)
+    }
+
+    /// Generates a level with difficulty and grid size
+    static func generateLevel(difficulty: Difficulty, gridSize: GridSize) -> LevelDefinition {
+        let nodeCount = difficulty.nodeCount(for: gridSize)
+        return generateLevel(size: gridSize.size, numberOfNodes: nodeCount)
     }
 }

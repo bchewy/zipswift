@@ -15,6 +15,7 @@ struct GameView: View {
     @State private var showWinOverlay = false
     @State private var finalTime: TimeInterval = 0
     @State private var currentDifficulty: Difficulty
+    @State private var currentGridSize: GridSize
     @State private var showHistory = false
     @State private var showSettings = false
     @State private var showDailyChallenge = false
@@ -36,10 +37,11 @@ struct GameView: View {
     private var settings: SettingsManager { SettingsManager.shared }
 
     init() {
-        // Use default difficulty from settings
         let defaultDiff = SettingsManager.shared.defaultDifficulty
+        let defaultSize = SettingsManager.shared.defaultGridSize
         self._currentDifficulty = State(initialValue: defaultDiff)
-        let level = LevelGenerator.generateLevel(difficulty: defaultDiff)
+        self._currentGridSize = State(initialValue: defaultSize)
+        let level = LevelGenerator.generateLevel(difficulty: defaultDiff, gridSize: defaultSize)
         self._gameState = State(initialValue: GameState(level: level))
     }
 
@@ -91,6 +93,18 @@ struct GameView: View {
                     }
 
                     Spacer()
+
+                    // Grid size picker
+                    Menu {
+                        ForEach(GridSize.allCases, id: \.self) { size in
+                            Button(action: { changeGridSize(to: size) }) {
+                                Text(size.displayName)
+                            }
+                        }
+                    } label: {
+                        Text(currentGridSize.shortName)
+                            .font(.subheadline)
+                    }
 
                     // Difficulty picker
                     Menu {
@@ -283,6 +297,11 @@ struct GameView: View {
         generateNewGame()
     }
 
+    private func changeGridSize(to size: GridSize) {
+        currentGridSize = size
+        generateNewGame()
+    }
+
     private func generateNewGame() {
         withAnimation {
             showWinOverlay = false
@@ -292,7 +311,7 @@ struct GameView: View {
         currentPackId = nil
         currentPackLevelIndex = nil
 
-        let newLevel = LevelGenerator.generateLevel(difficulty: currentDifficulty)
+        let newLevel = LevelGenerator.generateLevel(difficulty: currentDifficulty, gridSize: currentGridSize)
         gameState = GameState(level: newLevel)
         elapsedTime = 0
         finalTime = 0
