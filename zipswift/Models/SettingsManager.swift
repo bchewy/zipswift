@@ -53,6 +53,7 @@ class SettingsManager {
     private let lastDailyDateKey = "settings_last_daily_date"
     private let dailyBestTimesKey = "settings_daily_best_times"
     private let audioThemeKey = "settings_audio_theme"
+    private let visualThemeKey = "settings_visual_theme"
 
     // MARK: - Accessibility
 
@@ -87,6 +88,14 @@ class SettingsManager {
     var accentColor: AccentColorOption {
         didSet {
             defaults.set(accentColor.rawValue, forKey: accentColorKey)
+        }
+    }
+
+    // MARK: - Visual Theme
+
+    var visualTheme: VisualTheme {
+        didSet {
+            defaults.set(visualTheme.rawValue, forKey: visualThemeKey)
         }
     }
 
@@ -190,6 +199,14 @@ class SettingsManager {
             self.accentColor = .blue
         }
 
+        // Load visual theme
+        if let themeString = defaults.string(forKey: visualThemeKey),
+           let theme = VisualTheme(rawValue: themeString) {
+            self.visualTheme = theme
+        } else {
+            self.visualTheme = .standard
+        }
+
         // Load default difficulty
         if let diffString = defaults.string(forKey: defaultDifficultyKey),
            let diff = Difficulty(rawValue: diffString) {
@@ -225,6 +242,7 @@ class SettingsManager {
         hapticsEnabled = true
         audioTheme = .classic
         accentColor = .blue
+        visualTheme = .standard
         showBestTime = true
         defaultDifficulty = .medium
         defaultGridSize = .classic

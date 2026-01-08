@@ -60,6 +60,19 @@ struct SettingsView: View {
                                 .frame(width: 24, height: 24)
                         }
                     }
+
+                    NavigationLink {
+                        VisualThemePicker(
+                            selectedTheme: $settings.visualTheme,
+                            totalStars: historyManager.totalStars
+                        )
+                    } label: {
+                        HStack {
+                            Label("Visual Theme", systemImage: "photo.artframe")
+                            Spacer()
+                            ThemePreviewView(theme: settings.visualTheme, size: 32)
+                        }
+                    }
                 } header: {
                     Text("Appearance")
                 }
@@ -307,6 +320,32 @@ struct SoundThemeRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Visual Theme Picker
+
+struct VisualThemePicker: View {
+    @Binding var selectedTheme: VisualTheme
+    let totalStars: Int
+
+    var body: some View {
+        List {
+            ForEach(VisualTheme.allCases) { theme in
+                let isLocked = !theme.isUnlocked(totalStars: totalStars)
+
+                ThemeSelectionRow(
+                    theme: theme,
+                    isSelected: selectedTheme == theme,
+                    isLocked: isLocked,
+                    requiredStars: theme.requiredStars
+                ) {
+                    selectedTheme = theme
+                }
+            }
+        }
+        .navigationTitle("Visual Theme")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

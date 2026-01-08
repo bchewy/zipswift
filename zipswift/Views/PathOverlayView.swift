@@ -16,8 +16,16 @@ struct PathOverlayView: View {
     @State private var pathProgress: CGFloat = 1.0
     @State private var glowOpacity: Double = 0.0
 
+    private var theme: VisualTheme {
+        SettingsManager.shared.visualTheme
+    }
+
+    private var pathStyle: ThemePathStyle {
+        theme.pathStyle
+    }
+
     private var pathColor: Color {
-        SettingsManager.shared.accentColor.color
+        pathStyle.effectiveColor
     }
 
     private var reduceMotion: Bool {
@@ -25,40 +33,68 @@ struct PathOverlayView: View {
     }
 
     var body: some View {
-        Canvas { context, size in
-            guard path.count >= 1 else { return }
+        ZStack {
+            if pathStyle.glowRadius > 0 && path.count >= 1 {
+                Canvas { context, _ in
+                    var swiftUIPath = Path()
 
-            var swiftUIPath = Path()
+                    let firstPoint = centerForCell(path[0])
+                    swiftUIPath.move(to: firstPoint)
 
-            let firstPoint = centerForCell(path[0])
-            swiftUIPath.move(to: firstPoint)
+                    for i in 1..<path.count {
+                        let point = centerForCell(path[i])
+                        swiftUIPath.addLine(to: point)
+                    }
 
-            for i in 1..<path.count {
-                let point = centerForCell(path[i])
-                swiftUIPath.addLine(to: point)
+                    context.stroke(
+                        swiftUIPath,
+                        with: .color(pathColor.opacity(0.4)),
+                        style: StrokeStyle(
+                            lineWidth: pathStyle.lineWidth + pathStyle.glowRadius,
+                            lineCap: pathStyle.lineCap,
+                            lineJoin: .round
+                        )
+                    )
+                }
+                .blur(radius: pathStyle.glowRadius / 2)
             }
 
-            if isWinning && !reduceMotion {
+            Canvas { context, _ in
+                guard path.count >= 1 else { return }
+
+                var swiftUIPath = Path()
+
+                let firstPoint = centerForCell(path[0])
+                swiftUIPath.move(to: firstPoint)
+
+                for i in 1..<path.count {
+                    let point = centerForCell(path[i])
+                    swiftUIPath.addLine(to: point)
+                }
+
+                if isWinning && !reduceMotion {
+                    context.stroke(
+                        swiftUIPath,
+                        with: .color(pathColor.opacity(glowOpacity * 0.5)),
+                        style: StrokeStyle(
+                            lineWidth: pathStyle.lineWidth + 8,
+                            lineCap: pathStyle.lineCap,
+                            lineJoin: .round
+                        )
+                    )
+                }
+
                 context.stroke(
-                    swiftUIPath,
-                    with: .color(pathColor.opacity(glowOpacity * 0.5)),
+                    swiftUIPath.trimmedPath(from: 0, to: pathProgress),
+                    with: .color(pathColor),
                     style: StrokeStyle(
-                        lineWidth: 18,
-                        lineCap: .round,
-                        lineJoin: .round
+                        lineWidth: pathStyle.lineWidth,
+                        lineCap: pathStyle.lineCap,
+                        lineJoin: .round,
+                        dash: pathStyle.dashPattern
                     )
                 )
             }
-
-            context.stroke(
-                swiftUIPath.trimmedPath(from: 0, to: pathProgress),
-                with: .color(pathColor),
-                style: StrokeStyle(
-                    lineWidth: 10,
-                    lineCap: .round,
-                    lineJoin: .round
-                )
-            )
         }
         .onChange(of: path.count) { oldCount, newCount in
             guard !reduceMotion else { return }

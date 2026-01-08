@@ -22,6 +22,10 @@ struct GridView: View {
     private var gridSize: Int { gameState.level.size }
     private let gridPadding: CGFloat = 8
 
+    private var theme: VisualTheme {
+        SettingsManager.shared.visualTheme
+    }
+
     var body: some View {
         GeometryReader { geometry in
             let availableSize = min(geometry.size.width, geometry.size.height)
@@ -31,13 +35,14 @@ struct GridView: View {
             ZStack {
                 // Background
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.15))
+                    .fill(theme.gridBackground.asBackground())
 
                 // Grid lines
                 GridLinesView(
                     gridSize: gridSize,
                     cellSize: cellSize,
-                    origin: gridOrigin
+                    origin: gridOrigin,
+                    lineColor: theme.gridLineColor
                 )
 
                 // Path overlay
@@ -229,10 +234,10 @@ struct GridLinesView: View {
     let gridSize: Int
     let cellSize: CGFloat
     let origin: CGPoint
+    var lineColor: Color = Color.gray.opacity(0.3)
 
     var body: some View {
-        Canvas { context, size in
-            let lineColor = Color.gray.opacity(0.3)
+        Canvas { context, _ in
 
             // Vertical lines
             for i in 0...gridSize {
