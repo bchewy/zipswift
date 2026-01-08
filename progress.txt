@@ -477,3 +477,29 @@
 - UIAccessibility.isReduceMotionEnabled etc. for system accessibility state
 
 ---
+
+## 2026-01-09 - ZIP-018
+
+### What was implemented
+- Final integration and polish ensuring all ZIP-001-017 features work together
+- Created Info.plist with CFBundleURLTypes for deep linking (zipswift://)
+- Configured UILaunchScreen with AccentColor background
+- Verified all managers initialized on app launch
+- Confirmed Settings organized into logical sections
+- Verified all 100 unit tests pass
+- Confirmed build succeeds
+
+### Files changed
+- Info.plist (new - deep linking, launch screen, scene configuration)
+- zipswift.xcodeproj/project.pbxproj (added INFOPLIST_FILE reference)
+
+### Learnings
+- PBXFileSystemSynchronizedRootGroup auto-includes files in source folder - Info.plist must be outside synced folder
+- INFOPLIST_FILE path should be relative to project root (Info.plist, not zipswift/Info.plist)
+- GENERATE_INFOPLIST_FILE = YES allows merging file-based and build setting-based keys
+- CFBundleURLTypes array structure for URL schemes can't be done via INFOPLIST_KEY_ build settings
+- UILaunchScreen dictionary in Info.plist is simpler than LaunchScreen.storyboard
+- SwiftUI apps need UIApplicationSceneManifest in Info.plist for scene delegate to work
+- All ZIP stories (001-018) now pass - full feature implementation complete
+
+---
