@@ -392,3 +392,32 @@
 - Skip button dismisses and sets hasCompletedOnboarding directly for users who want to skip
 
 ---
+
+## 2026-01-09 - ZIP-015
+
+### What was implemented
+- GameCenterManager singleton with @Observable for authentication state
+- LeaderboardID enum for 5 leaderboards with difficulty mapping
+- AchievementID enum mapping all 15 in-app achievements to Game Center IDs
+- Authentication on app launch via GKLocalPlayer.local.authenticateHandler
+- Leaderboards button in GameView header (only shown when authenticated)
+- Score submission to leaderboards on puzzle completion
+- GKAccessPoint configured at topLeading for Game Center badge
+- SwiftUI wrapper for GKGameCenterViewController
+
+### Files changed
+- zipswift/Models/GameCenterManager.swift (new - singleton, leaderboards, achievements)
+- zipswift/zipswiftApp.swift (added authenticatePlayer() on launch)
+- zipswift/Views/GameView.swift (added leaderboards button, score submission)
+- zipswift/Views/DailyChallengeView.swift (added daily score submission)
+
+### Learnings
+- GKGameCenterViewController deprecated in iOS 26 but still standard way to present Game Center UI
+- Use GKAccessPoint.shared for Game Center badge configuration
+- Submit scores as centiseconds (Int) to leaderboards
+- GKLeaderboard.submitScore is class method, not instance method
+- syncAchievements maps local achievement IDs to Game Center IDs
+- UIViewControllerRepresentable wrapper needed for GKGameCenterViewController in SwiftUI
+- Authentication state tracked via isAuthenticated bool for conditional UI
+
+---
