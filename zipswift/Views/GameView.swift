@@ -20,15 +20,19 @@ struct GameView: View {
     @State private var showDailyChallenge = false
     @State private var showAchievements = false
     @State private var showAchievementToast = false
+    @State private var showLevelPacks = false
     @State private var previousPathCount = 1
     @State private var previousTarget = 2
     @State private var undoUsedThisGame = false
+    @State private var currentPackId: String?
+    @State private var currentPackLevelIndex: Int?
 
     @Environment(\.scenePhase) private var scenePhase
 
     private let historyManager = GameHistoryManager.shared
     private let audioManager = AudioManager.shared
     private let achievementManager = AchievementManager.shared
+    private let levelProgressManager = LevelProgressManager.shared
     private var settings: SettingsManager { SettingsManager.shared }
 
     init() {
@@ -78,6 +82,12 @@ struct GameView: View {
                                 }
                             }
                         }
+                    }
+
+                    // Level Packs button
+                    Button(action: { showLevelPacks = true }) {
+                        Image(systemName: "square.grid.3x3")
+                            .font(.title3)
                     }
 
                     Spacer()
@@ -132,8 +142,17 @@ struct GameView: View {
                 // Timer display
                 TimerView(elapsedTime: elapsedTime)
 
+                // Pack level indicator
+                if let packId = currentPackId,
+                   let levelIndex = currentPackLevelIndex,
+                   let pack = LevelPacks.all.first(where: { $0.id == packId }) {
+                    Text("\(pack.name) - Level \(levelIndex + 1)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
                 // Best time indicator
-                if settings.showBestTime, let bestTime = historyManager.bestTime(for: currentDifficulty) {
+                if currentPackId == nil, settings.showBestTime, let bestTime = historyManager.bestTime(for: currentDifficulty) {
                     Text("Best: \(formatTime(bestTime))")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -204,6 +223,11 @@ struct GameView: View {
         .sheet(isPresented: $showAchievements) {
             AchievementsView()
         }
+        .sheet(isPresented: $showLevelPacks) {
+            LevelPacksView { level, packId, levelIndex in
+                loadPackLevel(level: level, packId: packId, levelIndex: levelIndex)
+            }
+        }
         .tint(settings.accentColor.color)
         .onChange(of: gameState.isComplete) { _, isComplete in
             if isComplete {
@@ -265,8 +289,28 @@ struct GameView: View {
         }
         stopTimer()
 
+        currentPackId = nil
+        currentPackLevelIndex = nil
+
         let newLevel = LevelGenerator.generateLevel(difficulty: currentDifficulty)
         gameState = GameState(level: newLevel)
+        elapsedTime = 0
+        finalTime = 0
+        previousPathCount = 1
+        previousTarget = 2
+        undoUsedThisGame = false
+    }
+
+    private func loadPackLevel(level: LevelDefinition, packId: String, levelIndex: Int) {
+        withAnimation {
+            showWinOverlay = false
+        }
+        stopTimer()
+
+        currentPackId = packId
+        currentPackLevelIndex = levelIndex
+
+        gameState = GameState(level: level)
         elapsedTime = 0
         finalTime = 0
         previousPathCount = 1
@@ -324,6 +368,16 @@ struct GameView: View {
             stars: starCount
         )
         historyManager.save(record)
+
+        // Save pack level progress if playing a pack level
+        if let packId = currentPackId, let levelIndex = currentPackLevelIndex {
+            levelProgressManager.recordCompletion(
+                packId: packId,
+                levelIndex: levelIndex,
+                time: finalTime,
+                stars: starCount
+            )
+        }
 
         // Check achievements
         achievementManager.checkAchievements(
