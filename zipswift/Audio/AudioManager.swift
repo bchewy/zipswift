@@ -77,6 +77,25 @@ class AudioManager {
         }
     }
 
+    /// Play a special celebratory fanfare for daily challenge completion
+    func playDailyCompletionSound() {
+        guard isSoundEnabled else { return }
+        let specialFanfare: [Float] = [
+            523.25, 659.25, 783.99,  // C-E-G chord
+            880.0, 987.77, 1046.50,  // A-B-C ascending
+            1318.51, 1567.98, 2093.0 // E6-G6-C7 triumphant ending
+        ]
+
+        for (index, freq) in specialFanfare.enumerated() {
+            let delay = Double(index) * 0.1
+            let duration: Float = index >= specialFanfare.count - 3 ? 0.5 : 0.15
+            let volume: Float = index >= specialFanfare.count - 3 ? 0.6 : 0.5
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: duration, volume: volume, attack: 0.01, decay: duration - 0.02)
+            }
+        }
+    }
+
     /// Toggle sound on/off
     func toggleSound() {
         SettingsManager.shared.soundEnabled.toggle()

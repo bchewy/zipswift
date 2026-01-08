@@ -47,6 +47,9 @@ class SettingsManager {
     private let accentColorKey = "settings_accent_color"
     private let showBestTimeKey = "settings_show_best_time"
     private let defaultDifficultyKey = "settings_default_difficulty"
+    private let dailyStreakKey = "settings_daily_streak"
+    private let lastDailyDateKey = "settings_last_daily_date"
+    private let dailyBestTimesKey = "settings_daily_best_times"
 
     // MARK: - Sound Settings
 
@@ -92,6 +95,62 @@ class SettingsManager {
         }
     }
 
+    // MARK: - Daily Challenge Settings
+
+    var dailyStreak: Int {
+        didSet {
+            defaults.set(dailyStreak, forKey: dailyStreakKey)
+        }
+    }
+
+    var lastDailyDate: Date? {
+        didSet {
+            defaults.set(lastDailyDate, forKey: lastDailyDateKey)
+        }
+    }
+
+    private(set) var dailyBestTimes: [String: TimeInterval] {
+        didSet {
+            if let data = try? JSONEncoder().encode(dailyBestTimes) {
+                defaults.set(data, forKey: dailyBestTimesKey)
+            }
+        }
+    }
+
+    func recordDailyCompletion(dateString: String, time: TimeInterval) {
+        let today = Calendar.current.startOfDay(for: Date())
+
+        if let lastDate = lastDailyDate {
+            let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
+            if Calendar.current.isDate(lastDate, inSameDayAs: yesterday) {
+                dailyStreak += 1
+            } else if !Calendar.current.isDate(lastDate, inSameDayAs: today) {
+                dailyStreak = 1
+            }
+        } else {
+            dailyStreak = 1
+        }
+
+        lastDailyDate = today
+
+        if let existingBest = dailyBestTimes[dateString] {
+            if time < existingBest {
+                dailyBestTimes[dateString] = time
+            }
+        } else {
+            dailyBestTimes[dateString] = time
+        }
+    }
+
+    func dailyBestTime(for dateString: String) -> TimeInterval? {
+        dailyBestTimes[dateString]
+    }
+
+    func hasDailyCompletedToday() -> Bool {
+        guard let lastDate = lastDailyDate else { return false }
+        return Calendar.current.isDateInToday(lastDate)
+    }
+
     // MARK: - Initialization
 
     private init() {
@@ -117,6 +176,17 @@ class SettingsManager {
             }
         } else {
             self.defaultDifficulty = .medium
+        }
+
+        // Load daily challenge settings
+        self.dailyStreak = defaults.integer(forKey: dailyStreakKey)
+        self.lastDailyDate = defaults.object(forKey: lastDailyDateKey) as? Date
+
+        if let data = defaults.data(forKey: dailyBestTimesKey),
+           let times = try? JSONDecoder().decode([String: TimeInterval].self, from: data) {
+            self.dailyBestTimes = times
+        } else {
+            self.dailyBestTimes = [:]
         }
     }
 

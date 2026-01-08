@@ -17,6 +17,7 @@ struct GameView: View {
     @State private var currentDifficulty: Difficulty
     @State private var showHistory = false
     @State private var showSettings = false
+    @State private var showDailyChallenge = false
     @State private var previousPathCount = 1
     @State private var previousTarget = 2
 
@@ -49,6 +50,24 @@ struct GameView: View {
                     Button(action: { showSettings = true }) {
                         Image(systemName: "gearshape")
                             .font(.title3)
+                    }
+
+                    // Daily Challenge button
+                    Button(action: { showDailyChallenge = true }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "calendar")
+                                .font(.title3)
+                            if settings.dailyStreak > 0 {
+                                HStack(spacing: 2) {
+                                    Image(systemName: "flame.fill")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                    Text("\(settings.dailyStreak)")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundColor(.orange)
+                                }
+                            }
+                        }
                     }
 
                     Spacer()
@@ -158,6 +177,9 @@ struct GameView: View {
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
+        }
+        .fullScreenCover(isPresented: $showDailyChallenge) {
+            DailyChallengeView()
         }
         .tint(settings.accentColor.color)
         .onChange(of: gameState.isComplete) { _, isComplete in
