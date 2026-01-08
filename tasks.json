@@ -195,8 +195,8 @@
         "Build succeeds with no warnings"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Audio customization adds personality and player expression"
+      "passes": true,
+      "notes": "Implemented: AudioTheme enum with 4 themes (classic, retro, minimal, playful). Added Waveform enum for sine/square/triangle. Each theme has distinct pop, node, and fanfare sounds with unique timing and volumes. SoundThemePicker in Settings with play button for preview. audioTheme property in SettingsManager with persistence. Theme option only visible when sound enabled."
     },
     {
       "id": "ZIP-011",
@@ -214,8 +214,8 @@
         "Build succeeds with no warnings"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Detailed stats appeal to completionists and show player growth"
+      "passes": true,
+      "notes": "Implemented: Redesigned HistoryView as statistics dashboard. Added overview section with total games, stars, time played, avg time. Streaks section shows daily streak, games today, weekly total. Charts section has games per day bar chart (7 days) and time trend line chart (10 games). Personal records section shows best times by difficulty and grid size. Milestones section shows progress to next achievement milestones. All built with SwiftUI shapes, no external dependencies."
     },
     {
       "id": "ZIP-012",
@@ -232,8 +232,8 @@
         "Build succeeds with no warnings"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Power user features for faster, more fluid gameplay"
+      "passes": true,
+      "notes": "Implemented: Shake to restart with confirmation alert. Double-tap grid shows restart dialog. Long press undo resets to start. Swipe down collapses grid to minimized view, swipe up expands. 3D Touch quick actions for Daily Challenge, Easy Game, Hard Game with system icons. iPad keyboard shortcuts R/N (restart), U (undo). All gestures trigger appropriate haptic feedback via triggerLightHaptic/triggerMediumHaptic."
     },
     {
       "id": "ZIP-013",
@@ -252,8 +252,8 @@
         "Build succeeds with no warnings"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Visual themes let players personalize their experience"
+      "passes": true,
+      "notes": "Implemented: VisualTheme enum with 5 themes (standard, neon, paper, minimal, ocean). Each theme has gridBackground (solid/gradient), gridLineColor, pathStyle (color, lineWidth, lineCap, glowRadius, dashPattern), and nodeStyle (backgroundColor, textColor, borderColor, borderWidth, shadowRadius). ThemePreviewView shows mini 3x3 grid with theme applied. VisualThemePicker in Settings shows locked themes with star requirements. Themes applied to GridView (background, lines), PathOverlayView (path), NumberNodeView (nodes)."
     },
     {
       "id": "ZIP-014",
@@ -272,8 +272,8 @@
         "Build succeeds with no warnings"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Good onboarding reduces churn from confused new players"
+      "passes": true,
+      "notes": "Implemented: OnboardingView with 4-page TabView (Welcome, PathDrawingDemo with auto-playing animation, NumberedNodes with sequential highlight, Tips). Skip button and PageIndicator. TutorialGameView with 5x5 guided level showing hint highlights for next cells. hasCompletedOnboarding in SettingsManager with UserDefaults persistence. Replay Tutorial button in Settings under Help section. ContentView shows onboarding on first launch via fullScreenCover."
     },
     {
       "id": "ZIP-015",

@@ -249,3 +249,146 @@
 - Path glow uses a wider stroke with lower opacity behind main path
 
 ---
+
+## 2026-01-09 - ZIP-010
+
+### What was implemented
+- Sound theme system with 4 distinct audio styles
+- AudioTheme enum: classic, retro, minimal, playful
+- Waveform enum: sine, square, triangle for different timbres
+- Classic: original warm sine waves with major chords
+- Retro: 8-bit square waves with chiptune feel
+- Minimal: soft subtle tones for focused play
+- Playful: bouncy triangle waves like xylophone
+- SoundThemePicker view with preview playback buttons
+- Theme persists in SettingsManager with audioTheme property
+
+### Files changed
+- zipswift/Audio/AudioManager.swift (added AudioTheme, Waveform, theme-specific methods)
+- zipswift/Models/SettingsManager.swift (added audioTheme property and key)
+- zipswift/Views/SettingsView.swift (added SoundThemePicker, SoundThemeRow)
+
+### Learnings
+- Square wave: simply check if sine value >= 0 and output +0.8 or -0.8
+- Triangle wave: use truncatingRemainder for period, linear ramp up/down
+- Each theme needs distinct pop, node, fanfare sounds with unique timing
+- Preview button plays quick sample without changing permanent selection
+- Only show theme picker when sound is enabled (conditional in settings)
+
+---
+
+## 2026-01-09 - ZIP-011
+
+### What was implemented
+- Statistics Dashboard with comprehensive charts and records
+- Overview section: total games, stars, time played, average time
+- Streaks section: daily streak from SettingsManager, games today, weekly total
+- Games per day bar chart (last 7 days) using SwiftUI shapes
+- Time trend line chart (last 10 games) with Path drawing
+- Personal records by difficulty AND grid size with new GameHistoryManager methods
+- Milestones section showing progress to next achievement thresholds
+- Improvement banner showing "X% faster than first games"
+
+### Files changed
+- zipswift/Views/HistoryView.swift (complete redesign from List to ScrollView dashboard)
+- zipswift/Models/GameHistoryManager.swift (added grid size statistics methods)
+
+### Learnings
+- Calendar.dateComponents([.yearForWeekOfYear, .weekOfYear]) gets start of current week
+- Chart line drawing: calculate x/y positions using Path, add circles at data points
+- Bar chart: use GeometryReader for height scaling, RoundedRectangle for bars
+- formatTotalTime(): hours/minutes format for total playtime display
+- StreakCard component for compact streak display in horizontal row
+- GridSizeRecordRow mirrors PersonalRecordRow pattern for grid size stats
+- Keep grid size stats separate section, only show if any records exist
+
+---
+
+## 2026-01-09 - ZIP-012
+
+### What was implemented
+- Shake detection via UIWindow.motionEnded override + NotificationCenter
+- Double-tap grid for restart (with confirmation dialog)
+- Long press undo button (0.5s) to reset to start
+- Swipe down/up to collapse/expand grid with CollapsedGridView
+- 3D Touch quick actions via AppDelegate + UIApplicationShortcutItem
+- iPad keyboard shortcuts using custom KeyboardShortcutModifier
+- Haptic feedback on all gestures (light for UI actions, medium for reset)
+
+### Files changed
+- zipswift/Views/GameView.swift (gestures, shake detection, keyboard shortcuts, CollapsedGridView)
+- zipswift/zipswiftApp.swift (AppDelegate, SceneDelegate, quick actions setup)
+
+### Learnings
+- Shake detection: override UIWindow.motionEnded, post to NotificationCenter
+- .onShake modifier uses onReceive to listen for shake notification
+- LongPressGesture with simultaneousGesture allows both tap and long press on button
+- Keyboard shortcuts: create invisible Button with .keyboardShortcut in background
+- 3D Touch: UIApplicationShortcutItem in AppDelegate.setupQuickActions()
+- SceneDelegate handles shortcut when app is already running
+- Collapse/expand: use transition() with move(edge:) combined with opacity
+- SwiftUI conditional rendering (!isGridCollapsed) for different views
+
+---
+
+## 2026-01-09 - ZIP-013
+
+### What was implemented
+- VisualTheme enum with 5 themes (standard, neon, paper, minimal, ocean)
+- ThemeBackground enum for solid colors or gradients
+- ThemePathStyle struct with color, lineWidth, lineCap, glowRadius, dashPattern
+- ThemeNodeStyle struct with backgroundColor, textColor, borderColor, borderWidth, shadowRadius
+- ThemeColor enum for theme-specific color handling
+- ThemePreviewView showing mini 3x3 grid with sample path and nodes
+- ThemeSelectionRow with lock icon and star requirements for locked themes
+- VisualThemePicker for theme selection in Settings
+- Themes applied to GridView, PathOverlayView, NumberNodeView
+
+### Files changed
+- zipswift/Models/VisualTheme.swift (new - theme definitions)
+- zipswift/Models/SettingsManager.swift (added visualTheme property)
+- zipswift/Views/ThemePreviewView.swift (new - mini grid preview)
+- zipswift/Views/SettingsView.swift (added VisualThemePicker)
+- zipswift/Views/GridView.swift (theme background/lines)
+- zipswift/Views/PathOverlayView.swift (theme path style with glow)
+- zipswift/Views/NumberNodeView.swift (theme node style)
+
+### Learnings
+- AnyShapeStyle can wrap both Color and LinearGradient for flexible backgrounds
+- ThemeBackground enum with asBackground() returns AnyShapeStyle
+- Glow effect: separate Canvas layer with blur(radius:) for path glow
+- Color.magenta doesn't exist in SwiftUI - define with RGB: Color(red: 1.0, green: 0.0, blue: 0.6)
+- ThemeColor enum maps theme tokens to actual Color values
+- isUnlocked(totalStars:) method for star-based theme unlocking
+- GridLinesView accepts lineColor parameter for theme customization
+
+---
+
+## 2026-01-09 - ZIP-014
+
+### What was implemented
+- Onboarding flow shown on first launch with 4 animated pages
+- Welcome page with app name, tagline, and animated logo
+- Path drawing demonstration with auto-playing animation loop
+- Numbered nodes explanation with sequential highlight animation
+- Tips for success page with icon-based tip rows
+- 5x5 guided tutorial level with hint highlights
+- hasCompletedOnboarding tracking in SettingsManager
+- Replay Tutorial option in Settings
+
+### Files changed
+- zipswift/Views/OnboardingView.swift (new - OnboardingView, WelcomePage, PathDrawingDemoPage, NumberedNodesPage, TipsPage, TutorialGameView, TutorialGridView)
+- zipswift/Models/SettingsManager.swift (added hasCompletedOnboarding property and key)
+- zipswift/Views/SettingsView.swift (added Help section with Replay Tutorial, showTutorial state, fullScreenCover)
+- zipswift/ContentView.swift (added showOnboarding on first launch check)
+
+### Learnings
+- TabView with .page(indexDisplayMode: .never) for custom page indicators
+- DemoGridView is simpler than full GridView - just renders static state with path animation
+- TutorialGameView uses static level definition with pre-built Hamiltonian path
+- Auto-playing animation loop: use DispatchQueue.main.asyncAfter with isAnimating guard
+- Tutorial highlights pulse using repeatForever(autoreverses: true) animation
+- fullScreenCover(isPresented:) on ContentView.onAppear for first-launch onboarding
+- Skip button dismisses and sets hasCompletedOnboarding directly for users who want to skip
+
+---
