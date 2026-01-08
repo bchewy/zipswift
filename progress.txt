@@ -221,3 +221,31 @@
 - Reset hints in both generateNewGame() and loadPackLevel() for consistency
 
 ---
+
+## 2026-01-09 - ZIP-009
+
+### What was implemented
+- Enhanced animations for polished gameplay feel
+- Win state path glow with pulsing effect in PathOverlayView
+- Cell visit bounce animation via CellVisitIndicator
+- Numbered node ring pulse via wasJustReached prop in NumberNodeView
+- Invalid move shake animation in InvalidMoveIndicator
+- Timer start bounce animation in TimerView
+- All animations respect reduceMotion accessibility setting
+
+### Files changed
+- zipswift/Models/SettingsManager.swift (added reduceMotion computed property)
+- zipswift/Views/PathOverlayView.swift (added isWinning param, glow effect)
+- zipswift/Views/NumberNodeView.swift (added wasJustReached param, ring pulse)
+- zipswift/Views/GridView.swift (added CellVisitIndicator, animation triggers)
+- zipswift/Views/GameView.swift (updated TimerView with bounce)
+
+### Learnings
+- UIAccessibility.isReduceMotionEnabled gives system preference for reduced motion
+- Canvas doesn't animate well - use overlays for animation effects
+- spring() animation with low dampingFraction creates nice bounce
+- Track recently visited cells/nodes with state and clear after delay
+- Shake animation via sequential offset changes looks natural
+- Path glow uses a wider stroke with lower opacity behind main path
+
+---

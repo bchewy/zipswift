@@ -52,6 +52,7 @@ class SettingsManager {
     private let dailyStreakKey = "settings_daily_streak"
     private let lastDailyDateKey = "settings_last_daily_date"
     private let dailyBestTimesKey = "settings_daily_best_times"
+    private let audioThemeKey = "settings_audio_theme"
 
     // MARK: - Accessibility
 
@@ -64,6 +65,12 @@ class SettingsManager {
     var soundEnabled: Bool {
         didSet {
             defaults.set(soundEnabled, forKey: soundEnabledKey)
+        }
+    }
+
+    var audioTheme: AudioTheme {
+        didSet {
+            defaults.set(audioTheme.rawValue, forKey: audioThemeKey)
         }
     }
 
@@ -167,6 +174,14 @@ class SettingsManager {
         self.hapticsEnabled = defaults.object(forKey: hapticsEnabledKey) as? Bool ?? true
         self.showBestTime = defaults.object(forKey: showBestTimeKey) as? Bool ?? true
 
+        // Load audio theme
+        if let themeString = defaults.string(forKey: audioThemeKey),
+           let theme = AudioTheme(rawValue: themeString) {
+            self.audioTheme = theme
+        } else {
+            self.audioTheme = .classic
+        }
+
         // Load accent color
         if let colorString = defaults.string(forKey: accentColorKey),
            let color = AccentColorOption(rawValue: colorString) {
@@ -208,6 +223,7 @@ class SettingsManager {
     func resetToDefaults() {
         soundEnabled = true
         hapticsEnabled = true
+        audioTheme = .classic
         accentColor = .blue
         showBestTime = true
         defaultDifficulty = .medium

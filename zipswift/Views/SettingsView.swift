@@ -27,6 +27,19 @@ struct SettingsView: View {
                         Label("Sound Effects", systemImage: "speaker.wave.2")
                     }
 
+                    if settings.soundEnabled {
+                        NavigationLink {
+                            SoundThemePicker(selectedTheme: $settings.audioTheme)
+                        } label: {
+                            HStack {
+                                Label("Sound Theme", systemImage: settings.audioTheme.icon)
+                                Spacer()
+                                Text(settings.audioTheme.displayName)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+
                     Toggle(isOn: $settings.hapticsEnabled) {
                         Label("Haptic Feedback", systemImage: "hand.tap")
                     }
@@ -217,6 +230,81 @@ struct ColorOption: View {
                     .font(.caption)
                     .foregroundColor(isSelected ? color.color : .secondary)
             }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Sound Theme Picker
+
+struct SoundThemePicker: View {
+    @Binding var selectedTheme: AudioTheme
+
+    private let audioManager = AudioManager.shared
+    private var accentColor: Color { SettingsManager.shared.accentColor.color }
+
+    var body: some View {
+        List {
+            ForEach(AudioTheme.allCases, id: \.self) { theme in
+                SoundThemeRow(
+                    theme: theme,
+                    isSelected: selectedTheme == theme,
+                    onSelect: {
+                        selectedTheme = theme
+                    },
+                    onPreview: {
+                        audioManager.previewTheme(theme)
+                    }
+                )
+            }
+        }
+        .navigationTitle("Sound Theme")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct SoundThemeRow: View {
+    let theme: AudioTheme
+    let isSelected: Bool
+    let onSelect: () -> Void
+    let onPreview: () -> Void
+
+    private var accentColor: Color { SettingsManager.shared.accentColor.color }
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: 12) {
+                Image(systemName: theme.icon)
+                    .font(.title3)
+                    .foregroundColor(isSelected ? accentColor : .secondary)
+                    .frame(width: 28)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(theme.displayName)
+                        .font(.body)
+                        .foregroundColor(.primary)
+
+                    Text(theme.description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Button(action: onPreview) {
+                    Image(systemName: "play.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(accentColor)
+                }
+                .buttonStyle(.plain)
+
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .foregroundColor(accentColor)
+                        .font(.body.weight(.semibold))
+                }
+            }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

@@ -9,21 +9,53 @@
 import AVFoundation
 import Foundation
 
+enum AudioTheme: String, CaseIterable, Codable {
+    case classic
+    case retro
+    case minimal
+    case playful
+
+    var displayName: String {
+        switch self {
+        case .classic: return "Classic"
+        case .retro: return "Retro"
+        case .minimal: return "Minimal"
+        case .playful: return "Playful"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .classic: return "Warm sine waves with major chords"
+        case .retro: return "8-bit style square waves"
+        case .minimal: return "Soft clicks and subtle tones"
+        case .playful: return "Bouncy xylophone-style sounds"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .classic: return "waveform"
+        case .retro: return "arcade.stick"
+        case .minimal: return "circle"
+        case .playful: return "sparkles"
+        }
+    }
+}
+
 class AudioManager {
     static let shared = AudioManager()
 
     private var audioEngine: AVAudioEngine?
     private var playerNodes: [AVAudioPlayerNode] = []
 
-    // Check settings for sound enabled state
     private var isSoundEnabled: Bool {
         SettingsManager.shared.soundEnabled
     }
 
-    // Sound frequencies (in Hz) - using C major scale for positive feel
-    private let popFrequency: Float = 880      // A5 - bright pop
-    private let nodeFrequencies: [Float] = [523.25, 659.25, 783.99]  // C5, E5, G5 - major chord
-    private let fanfareFrequencies: [Float] = [523.25, 587.33, 659.25, 698.46, 783.99, 880.0, 987.77, 1046.50]  // C major scale up to C6
+    private var currentTheme: AudioTheme {
+        SettingsManager.shared.audioTheme
+    }
 
     private init() {
         setupAudioSession()
@@ -46,55 +78,80 @@ class AudioManager {
 
     // MARK: - Public Methods
 
-    /// Play a short pop sound when visiting a cell
     func playPopSound() {
         guard isSoundEnabled else { return }
-        playTone(frequency: popFrequency, duration: 0.05, volume: 0.3, attack: 0.01, decay: 0.04)
+        switch currentTheme {
+        case .classic:
+            playTone(frequency: 880, duration: 0.05, volume: 0.3, attack: 0.01, decay: 0.04, waveform: .sine)
+        case .retro:
+            playTone(frequency: 1200, duration: 0.03, volume: 0.25, attack: 0.005, decay: 0.02, waveform: .square)
+        case .minimal:
+            playTone(frequency: 1000, duration: 0.02, volume: 0.15, attack: 0.005, decay: 0.015, waveform: .sine)
+        case .playful:
+            playTone(frequency: 1568, duration: 0.08, volume: 0.35, attack: 0.01, decay: 0.07, waveform: .triangle)
+        }
     }
 
-    /// Play a pleasant ding when reaching a numbered node
     func playNodeSound() {
         guard isSoundEnabled else { return }
-        // Play a quick ascending arpeggio (C-E-G)
-        for (index, freq) in nodeFrequencies.enumerated() {
-            let delay = Double(index) * 0.05
+        let freqs: [Float]
+        let waveform: Waveform
+
+        switch currentTheme {
+        case .classic:
+            freqs = [523.25, 659.25, 783.99]
+            waveform = .sine
+        case .retro:
+            freqs = [440, 554.37, 659.25]
+            waveform = .square
+        case .minimal:
+            freqs = [880, 1046.50]
+            waveform = .sine
+        case .playful:
+            freqs = [784, 988, 1175, 1568]
+            waveform = .triangle
+        }
+
+        for (index, freq) in freqs.enumerated() {
+            let delay = Double(index) * (currentTheme == .playful ? 0.03 : 0.05)
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.playTone(frequency: freq, duration: 0.15, volume: 0.4, attack: 0.01, decay: 0.14)
+                let volume: Float = self?.currentTheme == .retro ? 0.25 : 0.4
+                let duration: Float = self?.currentTheme == .minimal ? 0.08 : 0.15
+                self?.playTone(frequency: freq, duration: duration, volume: volume, attack: 0.01, decay: duration - 0.01, waveform: waveform)
             }
         }
     }
 
-    /// Play a celebratory fanfare when completing the level (1 or 2 stars)
     func playCompletionSound() {
         guard isSoundEnabled else { return }
-        for (index, freq) in fanfareFrequencies.enumerated() {
-            let delay = Double(index) * 0.08
-            let duration: Float = index == fanfareFrequencies.count - 1 ? 0.4 : 0.12
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.playTone(frequency: freq, duration: duration, volume: 0.5, attack: 0.01, decay: duration - 0.02)
-            }
+
+        switch currentTheme {
+        case .classic:
+            playClassicFanfare()
+        case .retro:
+            playRetroFanfare()
+        case .minimal:
+            playMinimalFanfare()
+        case .playful:
+            playPlayfulFanfare()
         }
     }
 
-    /// Play an extended celebratory fanfare for 3-star completion
     func playThreeStarFanfare() {
         guard isSoundEnabled else { return }
-        let threeStarFanfare: [Float] = [
-            523.25, 587.33, 659.25, 698.46, 783.99, 880.0,
-            1046.50, 1318.51, 1567.98, 2093.0
-        ]
 
-        for (index, freq) in threeStarFanfare.enumerated() {
-            let delay = Double(index) * 0.1
-            let duration: Float = index >= threeStarFanfare.count - 2 ? 0.5 : 0.12
-            let volume: Float = index >= threeStarFanfare.count - 2 ? 0.6 : 0.5
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.playTone(frequency: freq, duration: duration, volume: volume, attack: 0.01, decay: duration - 0.02)
-            }
+        switch currentTheme {
+        case .classic:
+            playClassicThreeStarFanfare()
+        case .retro:
+            playRetroThreeStarFanfare()
+        case .minimal:
+            playMinimalThreeStarFanfare()
+        case .playful:
+            playPlayfulThreeStarFanfare()
         }
     }
 
-    /// Play completion sound based on star count
     func playStarCompletionSound(stars: Int) {
         if stars >= 3 {
             playThreeStarFanfare()
@@ -103,41 +160,57 @@ class AudioManager {
         }
     }
 
-    /// Play a special celebratory fanfare for daily challenge completion
     func playDailyCompletionSound() {
         guard isSoundEnabled else { return }
-        let specialFanfare: [Float] = [
-            523.25, 659.25, 783.99,  // C-E-G chord
-            880.0, 987.77, 1046.50,  // A-B-C ascending
-            1318.51, 1567.98, 2093.0 // E6-G6-C7 triumphant ending
-        ]
-
-        for (index, freq) in specialFanfare.enumerated() {
-            let delay = Double(index) * 0.1
-            let duration: Float = index >= specialFanfare.count - 3 ? 0.5 : 0.15
-            let volume: Float = index >= specialFanfare.count - 3 ? 0.6 : 0.5
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.playTone(frequency: freq, duration: duration, volume: volume, attack: 0.01, decay: duration - 0.02)
-            }
-        }
+        playThreeStarFanfare()
     }
 
-    /// Play achievement unlock sound
     func playAchievementSound() {
         guard isSoundEnabled else { return }
-        let achievementTones: [Float] = [
-            659.25, 783.99, 987.77, 1318.51
-        ]
+        let waveform: Waveform = currentTheme == .retro ? .square : .sine
+        let freqs: [Float] = [659.25, 783.99, 987.77, 1318.51]
 
-        for (index, freq) in achievementTones.enumerated() {
+        for (index, freq) in freqs.enumerated() {
             let delay = Double(index) * 0.08
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.playTone(frequency: freq, duration: 0.2, volume: 0.45, attack: 0.01, decay: 0.18)
+                self?.playTone(frequency: freq, duration: 0.2, volume: 0.45, attack: 0.01, decay: 0.18, waveform: waveform)
             }
         }
     }
 
-    /// Toggle sound on/off
+    func previewTheme(_ theme: AudioTheme) {
+        guard isSoundEnabled else { return }
+        let original = currentTheme
+        SettingsManager.shared.audioTheme = theme
+
+        let freqs: [Float]
+        let waveform: Waveform
+
+        switch theme {
+        case .classic:
+            freqs = [523.25, 659.25, 783.99]
+            waveform = .sine
+        case .retro:
+            freqs = [440, 554.37, 659.25]
+            waveform = .square
+        case .minimal:
+            freqs = [880, 1046.50]
+            waveform = .sine
+        case .playful:
+            freqs = [784, 988, 1175]
+            waveform = .triangle
+        }
+
+        for (index, freq) in freqs.enumerated() {
+            let delay = Double(index) * 0.05
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: 0.12, volume: 0.4, attack: 0.01, decay: 0.1, waveform: waveform)
+            }
+        }
+
+        SettingsManager.shared.audioTheme = original
+    }
+
     func toggleSound() {
         SettingsManager.shared.soundEnabled.toggle()
     }
@@ -146,9 +219,105 @@ class AudioManager {
         isSoundEnabled
     }
 
+    // MARK: - Theme-Specific Fanfares
+
+    private func playClassicFanfare() {
+        let freqs: [Float] = [523.25, 587.33, 659.25, 698.46, 783.99, 880.0, 987.77, 1046.50]
+        for (index, freq) in freqs.enumerated() {
+            let delay = Double(index) * 0.08
+            let duration: Float = index == freqs.count - 1 ? 0.4 : 0.12
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: duration, volume: 0.5, attack: 0.01, decay: duration - 0.02, waveform: .sine)
+            }
+        }
+    }
+
+    private func playRetroFanfare() {
+        let freqs: [Float] = [440, 523.25, 659.25, 880]
+        for (index, freq) in freqs.enumerated() {
+            let delay = Double(index) * 0.1
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: 0.15, volume: 0.3, attack: 0.005, decay: 0.14, waveform: .square)
+            }
+        }
+    }
+
+    private func playMinimalFanfare() {
+        let freqs: [Float] = [880, 1046.50, 1318.51]
+        for (index, freq) in freqs.enumerated() {
+            let delay = Double(index) * 0.15
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: 0.2, volume: 0.25, attack: 0.02, decay: 0.18, waveform: .sine)
+            }
+        }
+    }
+
+    private func playPlayfulFanfare() {
+        let freqs: [Float] = [784, 988, 1175, 1319, 1568, 1760, 2093]
+        for (index, freq) in freqs.enumerated() {
+            let delay = Double(index) * 0.06
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: 0.12, volume: 0.4, attack: 0.005, decay: 0.11, waveform: .triangle)
+            }
+        }
+    }
+
+    private func playClassicThreeStarFanfare() {
+        let freqs: [Float] = [523.25, 587.33, 659.25, 698.46, 783.99, 880.0, 1046.50, 1318.51, 1567.98, 2093.0]
+        for (index, freq) in freqs.enumerated() {
+            let delay = Double(index) * 0.1
+            let duration: Float = index >= freqs.count - 2 ? 0.5 : 0.12
+            let volume: Float = index >= freqs.count - 2 ? 0.6 : 0.5
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: duration, volume: volume, attack: 0.01, decay: duration - 0.02, waveform: .sine)
+            }
+        }
+    }
+
+    private func playRetroThreeStarFanfare() {
+        let freqs: [Float] = [440, 523.25, 659.25, 880, 1046.50, 1318.51]
+        for (index, freq) in freqs.enumerated() {
+            let delay = Double(index) * 0.12
+            let volume: Float = index >= freqs.count - 2 ? 0.4 : 0.3
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: 0.18, volume: volume, attack: 0.005, decay: 0.17, waveform: .square)
+            }
+        }
+    }
+
+    private func playMinimalThreeStarFanfare() {
+        let freqs: [Float] = [880, 1046.50, 1318.51, 1567.98, 2093.0]
+        for (index, freq) in freqs.enumerated() {
+            let delay = Double(index) * 0.2
+            let volume: Float = index >= freqs.count - 2 ? 0.35 : 0.25
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: 0.25, volume: volume, attack: 0.02, decay: 0.22, waveform: .sine)
+            }
+        }
+    }
+
+    private func playPlayfulThreeStarFanfare() {
+        let freqs: [Float] = [784, 988, 1175, 1319, 1568, 1760, 2093, 2349, 2637, 3136]
+        for (index, freq) in freqs.enumerated() {
+            let delay = Double(index) * 0.05
+            let volume: Float = index >= freqs.count - 3 ? 0.5 : 0.4
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: 0.1, volume: volume, attack: 0.005, decay: 0.09, waveform: .triangle)
+            }
+        }
+    }
+
+    // MARK: - Waveform Types
+
+    private enum Waveform {
+        case sine
+        case square
+        case triangle
+    }
+
     // MARK: - Tone Generation
 
-    private func playTone(frequency: Float, duration: Float, volume: Float, attack: Float, decay: Float) {
+    private func playTone(frequency: Float, duration: Float, volume: Float, attack: Float, decay: Float, waveform: Waveform) {
         guard let engine = audioEngine else { return }
 
         let sampleRate: Double = 44100
@@ -168,17 +337,30 @@ class AudioManager {
         let sustainFrames = Int(frameCount) - attackFrames - decayFrames
 
         for frame in 0..<Int(frameCount) {
-            // Generate sine wave
             let time = Float(frame) / Float(sampleRate)
-            var sample = sin(2.0 * .pi * frequency * time)
+            var sample: Float
 
-            // Apply envelope (attack-sustain-decay)
+            switch waveform {
+            case .sine:
+                sample = sin(2.0 * .pi * frequency * time)
+            case .square:
+                let sineValue = sin(2.0 * .pi * frequency * time)
+                sample = sineValue >= 0 ? 0.8 : -0.8
+            case .triangle:
+                let period = 1.0 / frequency
+                let t = time.truncatingRemainder(dividingBy: period)
+                let normalized = t / period
+                if normalized < 0.5 {
+                    sample = 4.0 * normalized - 1.0
+                } else {
+                    sample = 3.0 - 4.0 * normalized
+                }
+            }
+
             var envelope: Float = 1.0
             if frame < attackFrames {
-                // Attack phase
                 envelope = Float(frame) / Float(attackFrames)
             } else if frame >= attackFrames + sustainFrames {
-                // Decay phase
                 let decayProgress = Float(frame - attackFrames - sustainFrames) / Float(decayFrames)
                 envelope = 1.0 - decayProgress
             }
@@ -187,7 +369,6 @@ class AudioManager {
             floatData[frame] = sample
         }
 
-        // Create and configure player node
         let playerNode = AVAudioPlayerNode()
         engine.attach(playerNode)
         engine.connect(playerNode, to: engine.mainMixerNode, format: format)
