@@ -190,4 +190,25 @@ class GameState {
         timerStart = nil
         isComplete = false
     }
+
+    func getHintCells(count: Int = 3) -> [GridPoint] {
+        guard let solutionPath = level.solutionPath else { return [] }
+
+        guard let currentIndex = solutionPath.firstIndex(of: currentPosition) else {
+            return []
+        }
+
+        var hintCells: [GridPoint] = []
+        var nextIndex = currentIndex + 1
+
+        while hintCells.count < count && nextIndex < solutionPath.count {
+            let cell = solutionPath[nextIndex]
+            if !visited.contains(cell) {
+                hintCells.append(cell)
+            }
+            nextIndex += 1
+        }
+
+        return hintCells
+    }
 }

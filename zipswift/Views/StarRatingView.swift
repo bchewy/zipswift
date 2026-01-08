@@ -8,21 +8,27 @@
 import SwiftUI
 
 struct StarRating {
-    static func stars(for time: TimeInterval, difficulty: Difficulty) -> Int {
+    static func stars(for time: TimeInterval, difficulty: Difficulty, hintsUsed: Int = 0) -> Int {
+        var baseStars: Int
         switch difficulty {
         case .easy:
-            if time < 45 { return 3 }
-            if time < 90 { return 2 }
-            return 1
+            if time < 45 { baseStars = 3 }
+            else if time < 90 { baseStars = 2 }
+            else { baseStars = 1 }
         case .medium:
-            if time < 60 { return 3 }
-            if time < 120 { return 2 }
-            return 1
+            if time < 60 { baseStars = 3 }
+            else if time < 120 { baseStars = 2 }
+            else { baseStars = 1 }
         case .hard:
-            if time < 90 { return 3 }
-            if time < 180 { return 2 }
-            return 1
+            if time < 90 { baseStars = 3 }
+            else if time < 180 { baseStars = 2 }
+            else { baseStars = 1 }
         }
+
+        if hintsUsed > 0 {
+            return min(baseStars, 2)
+        }
+        return baseStars
     }
 
     static func thresholds(for difficulty: Difficulty) -> (threeStar: TimeInterval, twoStar: TimeInterval) {

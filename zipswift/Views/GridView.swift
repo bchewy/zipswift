@@ -10,6 +10,7 @@ import SwiftUI
 struct GridView: View {
     @Bindable var gameState: GameState
     let onInvalidMove: () -> Void
+    var hintCells: [GridPoint] = []
 
     @State private var invalidMovePoint: GridPoint?
     @State private var lastVisitedDuringDrag: GridPoint?
@@ -43,6 +44,16 @@ struct GridView: View {
                     cellSize: cellSize,
                     gridOrigin: gridOrigin
                 )
+
+                // Hint indicators
+                ForEach(Array(hintCells.enumerated()), id: \.offset) { index, hintPoint in
+                    HintIndicator(
+                        point: hintPoint,
+                        cellSize: cellSize,
+                        gridOrigin: gridOrigin,
+                        order: index
+                    )
+                }
 
                 // Invalid move indicator
                 if let invalidPoint = invalidMovePoint {
@@ -202,6 +213,49 @@ struct GridLinesView: View {
                 context.stroke(path, with: .color(lineColor), lineWidth: 1)
             }
         }
+    }
+}
+
+// MARK: - Hint Indicator
+
+struct HintIndicator: View {
+    let point: GridPoint
+    let cellSize: CGFloat
+    let gridOrigin: CGPoint
+    let order: Int
+
+    @State private var isPulsing = false
+
+    private var accentColor: Color { SettingsManager.shared.accentColor.color }
+
+    var body: some View {
+        Circle()
+            .fill(accentColor.opacity(0.3))
+            .frame(width: cellSize * 0.6, height: cellSize * 0.6)
+            .overlay(
+                Circle()
+                    .stroke(accentColor, lineWidth: 2)
+            )
+            .overlay(
+                Text("\(order + 1)")
+                    .font(.system(size: cellSize * 0.25, weight: .bold))
+                    .foregroundColor(accentColor)
+            )
+            .scaleEffect(isPulsing ? 1.1 : 1.0)
+            .opacity(isPulsing ? 0.8 : 1.0)
+            .position(
+                x: gridOrigin.x + CGFloat(point.col) * cellSize + cellSize / 2,
+                y: gridOrigin.y + CGFloat(point.row) * cellSize + cellSize / 2
+            )
+            .onAppear {
+                withAnimation(
+                    .easeInOut(duration: 0.8)
+                    .repeatForever(autoreverses: true)
+                    .delay(Double(order) * 0.2)
+                ) {
+                    isPulsing = true
+                }
+            }
     }
 }
 

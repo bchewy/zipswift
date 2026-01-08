@@ -27,6 +27,9 @@ struct GameView: View {
     @State private var previousPathCount = 1
     @State private var previousTarget = 2
     @State private var undoUsedThisGame = false
+    @State private var hintsUsedThisGame = 0
+    @State private var showingHint = false
+    @State private var hintCells: [GridPoint] = []
     @State private var currentPackId: String?
     @State private var currentPackLevelIndex: Int?
 
@@ -185,30 +188,56 @@ struct GameView: View {
                 // Game grid
                 GridView(
                     gameState: gameState,
-                    onInvalidMove: triggerInvalidMoveHaptic
+                    onInvalidMove: triggerInvalidMoveHaptic,
+                    hintCells: hintCells
                 )
                 .padding(.horizontal, 16)
 
                 Spacer()
 
-                // Undo button
-                Button(action: {
-                    undoUsedThisGame = true
-                    gameState.undo()
-                }) {
-                    HStack {
-                        Image(systemName: "arrow.uturn.backward")
-                        Text("Undo")
+                // Action buttons
+                HStack(spacing: 16) {
+                    // Hint button
+                    Button(action: activateHint) {
+                        HStack {
+                            Image(systemName: "lightbulb.fill")
+                            Text("Hint")
+                            if hintsUsedThisGame < 3 {
+                                Text("(\(3 - hintsUsedThisGame))")
+                                    .font(.caption)
+                            }
+                        }
+                        .font(.headline)
+                        .foregroundColor(settings.accentColor.color)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(settings.accentColor.color, lineWidth: 2)
+                        )
                     }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 12)
-                    .background(settings.accentColor.color)
-                    .cornerRadius(10)
+                    .disabled(hintsUsedThisGame >= 3 || showingHint)
+                    .opacity(hintsUsedThisGame >= 3 ? 0.5 : 1.0)
+
+                    // Undo button
+                    Button(action: {
+                        undoUsedThisGame = true
+                        gameState.undo()
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.uturn.backward")
+                            Text("Undo")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(settings.accentColor.color)
+                        .cornerRadius(10)
+                    }
+                    .disabled(gameState.path.count <= 1)
+                    .opacity(gameState.path.count <= 1 ? 0.5 : 1.0)
                 }
-                .disabled(gameState.path.count <= 1)
-                .opacity(gameState.path.count <= 1 ? 0.5 : 1.0)
 
                 // How to play panel
                 BottomPanelView()
@@ -334,6 +363,9 @@ struct GameView: View {
         previousPathCount = 1
         previousTarget = 2
         undoUsedThisGame = false
+        hintsUsedThisGame = 0
+        showingHint = false
+        hintCells = []
     }
 
     private func loadPackLevel(level: LevelDefinition, packId: String, levelIndex: Int) {
@@ -351,6 +383,9 @@ struct GameView: View {
         previousPathCount = 1
         previousTarget = 2
         undoUsedThisGame = false
+        hintsUsedThisGame = 0
+        showingHint = false
+        hintCells = []
     }
 
     // MARK: - Timer Management
@@ -390,7 +425,7 @@ struct GameView: View {
     private func handleWin() {
         stopTimer()
         finalTime = elapsedTime
-        let starCount = StarRating.stars(for: finalTime, difficulty: currentDifficulty)
+        let starCount = StarRating.stars(for: finalTime, difficulty: currentDifficulty, hintsUsed: hintsUsedThisGame)
         triggerSuccessHaptic()
         audioManager.playStarCompletionSound(stars: starCount)
 
@@ -435,7 +470,32 @@ struct GameView: View {
         }
     }
 
+    // MARK: - Hint System
+
+    private func activateHint() {
+        guard hintsUsedThisGame < 3 && !showingHint else { return }
+
+        hintsUsedThisGame += 1
+        hintCells = gameState.getHintCells(count: 3)
+        showingHint = true
+        triggerHintHaptic()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            withAnimation {
+                self.hintCells = []
+                self.showingHint = false
+            }
+        }
+    }
+
     // MARK: - Haptic Feedback
+
+    private func triggerHintHaptic() {
+        guard settings.hapticsEnabled else { return }
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.prepare()
+        generator.impactOccurred()
+    }
 
     private func triggerInvalidMoveHaptic() {
         guard settings.hapticsEnabled else { return }
