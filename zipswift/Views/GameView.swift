@@ -22,6 +22,8 @@ struct GameView: View {
     @State private var showAchievements = false
     @State private var showAchievementToast = false
     @State private var showLevelPacks = false
+    @State private var showChallengeModes = false
+    @State private var activeChallengeMode: ChallengeMode?
     @State private var previousPathCount = 1
     @State private var previousTarget = 2
     @State private var undoUsedThisGame = false
@@ -89,6 +91,12 @@ struct GameView: View {
                     // Level Packs button
                     Button(action: { showLevelPacks = true }) {
                         Image(systemName: "square.grid.3x3")
+                            .font(.title3)
+                    }
+
+                    // Challenge Modes button
+                    Button(action: { showChallengeModes = true }) {
+                        Image(systemName: "bolt.fill")
                             .font(.title3)
                     }
 
@@ -241,6 +249,14 @@ struct GameView: View {
             LevelPacksView { level, packId, levelIndex in
                 loadPackLevel(level: level, packId: packId, levelIndex: levelIndex)
             }
+        }
+        .sheet(isPresented: $showChallengeModes) {
+            ChallengeModeSelectView { mode in
+                activeChallengeMode = mode
+            }
+        }
+        .fullScreenCover(item: $activeChallengeMode) { mode in
+            ChallengeGameView(mode: mode)
         }
         .tint(settings.accentColor.color)
         .onChange(of: gameState.isComplete) { _, isComplete in
