@@ -87,6 +87,26 @@ class GameHistoryManager {
         records.filter { $0.difficulty == difficulty }.map { $0.stars }.max() ?? 0
     }
 
+    // MARK: - Grid Size Statistics
+
+    func gamesCount(for gridSize: GridSize) -> Int {
+        records.filter { $0.gridSize == gridSize.size }.count
+    }
+
+    func bestTime(for gridSize: GridSize) -> TimeInterval? {
+        records
+            .filter { $0.gridSize == gridSize.size }
+            .map { $0.elapsedTime }
+            .min()
+    }
+
+    func bestTime(for difficulty: Difficulty, gridSize: GridSize) -> TimeInterval? {
+        records
+            .filter { $0.difficulty == difficulty && $0.gridSize == gridSize.size }
+            .map { $0.elapsedTime }
+            .min()
+    }
+
     // MARK: - Persistence
 
     private func loadRecords() {
