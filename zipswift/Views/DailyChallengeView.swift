@@ -278,9 +278,16 @@ struct DailyWinOverlayView: View {
 
     @State private var showContent = false
     @State private var confettiTrigger = false
+    @State private var showShareSheet = false
+
+    private var settings: SettingsManager { SettingsManager.shared }
 
     private var accentColor: Color {
-        SettingsManager.shared.accentColor.color
+        settings.accentColor.color
+    }
+
+    private var starCount: Int {
+        StarRating.stars(for: elapsedTime, difficulty: .medium)
     }
 
     var body: some View {
@@ -315,14 +322,33 @@ struct DailyWinOverlayView: View {
                             .font(.system(size: 48, weight: .semibold, design: .monospaced))
                             .foregroundColor(accentColor)
 
-                        Button(action: onDismiss) {
-                            Text("Done")
+                        StarRatingView(stars: starCount, animated: true, size: 32)
+
+                        HStack(spacing: 12) {
+                            Button(action: shareResult) {
+                                HStack {
+                                    Image(systemName: "square.and.arrow.up")
+                                    Text("Share")
+                                }
                                 .font(.headline)
-                                .foregroundColor(.white)
+                                .foregroundColor(accentColor)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background(accentColor)
-                                .cornerRadius(12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentColor, lineWidth: 2)
+                                )
+                            }
+
+                            Button(action: onDismiss) {
+                                Text("Done")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16)
+                                    .background(accentColor)
+                                    .cornerRadius(12)
+                            }
                         }
                         .padding(.horizontal, 20)
                     }
@@ -343,6 +369,9 @@ struct DailyWinOverlayView: View {
                 showContent = true
             }
         }
+        .sheet(isPresented: $showShareSheet) {
+            ShareSheet(items: shareItems)
+        }
     }
 
     private var formattedTime: String {
@@ -353,6 +382,43 @@ struct DailyWinOverlayView: View {
             let seconds = Int(elapsedTime) % 60
             return String(format: "%d:%02d", minutes, seconds)
         }
+    }
+
+    private var shareItems: [Any] {
+        var items: [Any] = []
+
+        let text = ShareHelper.generateShareText(
+            elapsedTime: elapsedTime,
+            difficulty: .medium,
+            stars: starCount,
+            isDaily: true,
+            dailyStreak: streak
+        )
+        items.append(text)
+
+        if let image = ShareHelper.generateShareImage(
+            elapsedTime: elapsedTime,
+            difficulty: .medium,
+            stars: starCount,
+            isDaily: true,
+            dailyStreak: streak
+        ) {
+            items.append(image)
+        }
+
+        return items
+    }
+
+    private func shareResult() {
+        triggerHaptic()
+        showShareSheet = true
+    }
+
+    private func triggerHaptic() {
+        guard settings.hapticsEnabled else { return }
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.prepare()
+        generator.impactOccurred()
     }
 }
 
