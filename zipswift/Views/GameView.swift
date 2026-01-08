@@ -179,6 +179,7 @@ struct GameView: View {
             if showWinOverlay {
                 WinOverlayView(
                     elapsedTime: finalTime,
+                    difficulty: currentDifficulty,
                     onPlayAgain: generateNewGame
                 )
             }
@@ -310,15 +311,17 @@ struct GameView: View {
     private func handleWin() {
         stopTimer()
         finalTime = elapsedTime
+        let starCount = StarRating.stars(for: finalTime, difficulty: currentDifficulty)
         triggerSuccessHaptic()
-        audioManager.playCompletionSound()
+        audioManager.playStarCompletionSound(stars: starCount)
 
         // Save game to history
         let record = GameRecord(
             completionDate: Date(),
             elapsedTime: finalTime,
             difficulty: currentDifficulty,
-            gridSize: gameState.level.size
+            gridSize: gameState.level.size,
+            stars: starCount
         )
         historyManager.save(record)
 

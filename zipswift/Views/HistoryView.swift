@@ -22,6 +22,20 @@ struct HistoryView: View {
                 Section("Statistics") {
                     StatsRow(label: "Total Games", value: "\(historyManager.totalGamesCount)")
 
+                    if historyManager.maxPossibleStars > 0 {
+                        HStack {
+                            Text("Total Stars")
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            HStack(spacing: 4) {
+                                Image(systemName: "star.fill")
+                                    .foregroundColor(.yellow)
+                                Text("\(historyManager.totalStars)/\(historyManager.maxPossibleStars)")
+                                    .fontWeight(.semibold)
+                            }
+                        }
+                    }
+
                     if let bestEasy = historyManager.bestTime(for: .easy) {
                         StatsRow(label: "Best Easy", value: formatTime(bestEasy))
                     }
@@ -159,6 +173,7 @@ struct GameRecordRow: View {
                     .foregroundColor(.secondary)
             }
             Spacer()
+            StarRatingView(stars: record.stars, animated: false, size: 16)
         }
         .padding(.vertical, 4)
     }

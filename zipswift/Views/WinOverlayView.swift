@@ -9,30 +9,33 @@ import SwiftUI
 
 struct WinOverlayView: View {
     let elapsedTime: TimeInterval
+    let difficulty: Difficulty
     let onPlayAgain: () -> Void
 
     @State private var showContent = false
+    @State private var showStars = false
     @State private var confettiTrigger = false
 
     private var accentColor: Color {
         SettingsManager.shared.accentColor.color
     }
 
+    private var starCount: Int {
+        StarRating.stars(for: elapsedTime, difficulty: difficulty)
+    }
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Semi-transparent background
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
 
-                // Confetti layer
                 ConfettiView(
                     trigger: confettiTrigger,
                     screenSize: geometry.size
                 )
                 .ignoresSafeArea()
 
-                // Content card
                 if showContent {
                     VStack(spacing: 24) {
                         Text("Puzzle Complete!")
@@ -42,6 +45,10 @@ struct WinOverlayView: View {
                         Text(formattedTime)
                             .font(.system(size: 48, weight: .semibold, design: .monospaced))
                             .foregroundColor(accentColor)
+
+                        if showStars {
+                            StarRatingView(stars: starCount, animated: true, size: 36)
+                        }
 
                         Button(action: onPlayAgain) {
                             Text("New Game")
@@ -69,6 +76,9 @@ struct WinOverlayView: View {
             confettiTrigger = true
             withAnimation(.easeOut(duration: 0.4).delay(0.2)) {
                 showContent = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                showStars = true
             }
         }
     }
@@ -174,5 +184,5 @@ struct ConfettiPiece: View {
 }
 
 #Preview {
-    WinOverlayView(elapsedTime: 45.3, onPlayAgain: {})
+    WinOverlayView(elapsedTime: 45.3, difficulty: .easy, onPlayAgain: {})
 }

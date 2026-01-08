@@ -69,6 +69,24 @@ class GameHistoryManager {
         records.filter { $0.difficulty == difficulty }
     }
 
+    // MARK: - Star Statistics
+
+    var totalStars: Int {
+        records.reduce(0) { $0 + $1.stars }
+    }
+
+    var maxPossibleStars: Int {
+        records.count * 3
+    }
+
+    func totalStars(for difficulty: Difficulty) -> Int {
+        records.filter { $0.difficulty == difficulty }.reduce(0) { $0 + $1.stars }
+    }
+
+    func bestStars(for difficulty: Difficulty) -> Int {
+        records.filter { $0.difficulty == difficulty }.map { $0.stars }.max() ?? 0
+    }
+
     // MARK: - Persistence
 
     private func loadRecords() {

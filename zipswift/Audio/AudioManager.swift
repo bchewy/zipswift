@@ -64,16 +64,42 @@ class AudioManager {
         }
     }
 
-    /// Play a celebratory fanfare when completing the level
+    /// Play a celebratory fanfare when completing the level (1 or 2 stars)
     func playCompletionSound() {
         guard isSoundEnabled else { return }
-        // Play ascending C major scale with slight acceleration
         for (index, freq) in fanfareFrequencies.enumerated() {
             let delay = Double(index) * 0.08
             let duration: Float = index == fanfareFrequencies.count - 1 ? 0.4 : 0.12
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 self?.playTone(frequency: freq, duration: duration, volume: 0.5, attack: 0.01, decay: duration - 0.02)
             }
+        }
+    }
+
+    /// Play an extended celebratory fanfare for 3-star completion
+    func playThreeStarFanfare() {
+        guard isSoundEnabled else { return }
+        let threeStarFanfare: [Float] = [
+            523.25, 587.33, 659.25, 698.46, 783.99, 880.0,
+            1046.50, 1318.51, 1567.98, 2093.0
+        ]
+
+        for (index, freq) in threeStarFanfare.enumerated() {
+            let delay = Double(index) * 0.1
+            let duration: Float = index >= threeStarFanfare.count - 2 ? 0.5 : 0.12
+            let volume: Float = index >= threeStarFanfare.count - 2 ? 0.6 : 0.5
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.playTone(frequency: freq, duration: duration, volume: volume, attack: 0.01, decay: duration - 0.02)
+            }
+        }
+    }
+
+    /// Play completion sound based on star count
+    func playStarCompletionSound(stars: Int) {
+        if stars >= 3 {
+            playThreeStarFanfare()
+        } else {
+            playCompletionSound()
         }
     }
 

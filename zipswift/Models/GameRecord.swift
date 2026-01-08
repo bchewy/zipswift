@@ -13,19 +13,22 @@ struct GameRecord: Identifiable, Codable, Equatable {
     let elapsedTime: TimeInterval
     let difficulty: Difficulty
     let gridSize: Int
+    let stars: Int
 
     init(
         id: UUID = UUID(),
         completionDate: Date,
         elapsedTime: TimeInterval,
         difficulty: Difficulty,
-        gridSize: Int
+        gridSize: Int,
+        stars: Int? = nil
     ) {
         self.id = id
         self.completionDate = completionDate
         self.elapsedTime = elapsedTime
         self.difficulty = difficulty
         self.gridSize = gridSize
+        self.stars = stars ?? StarRating.stars(for: elapsedTime, difficulty: difficulty)
     }
 
     var formattedTime: String {
