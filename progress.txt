@@ -449,3 +449,31 @@
 - WidgetCenter.shared.reloadAllTimelines() to trigger widget refresh
 
 ---
+
+## 2026-01-09 - ZIP-017
+
+### What was implemented
+- AccessibleGridView wrapper with full VoiceOver support
+- VoiceOver actions for Move Up/Down/Left/Right, Undo, Available Moves
+- UIAccessibility.post announcements for position changes
+- highContrastMode setting with toggle in Settings
+- GridLinesView high contrast mode with 2x line width
+- Undo button accessibility with moves available count
+- reduceTransparency and isVoiceOverRunning system property checks
+
+### Files changed
+- zipswift/Models/SettingsManager.swift (added highContrastMode, reduceTransparency, isVoiceOverRunning)
+- zipswift/Views/GridView.swift (added AccessibleGridView, accessibility helpers, high contrast support)
+- zipswift/Views/GameView.swift (use AccessibleGridView, undo button accessibility)
+- zipswift/Views/SettingsView.swift (added Accessibility section with High Contrast toggle)
+
+### Learnings
+- accessibilityAction(named:) for custom VoiceOver actions
+- UIAccessibility.post(notification: .announcement, argument:) for announcements
+- accessibilityElement(children: .combine) to group child views
+- accessibilityValue for dynamic state (e.g., available moves)
+- SwiftUI respects Dynamic Type by default for Text views
+- High contrast mode: increase line width and remove opacity
+- UIAccessibility.isReduceMotionEnabled etc. for system accessibility state
+
+---
