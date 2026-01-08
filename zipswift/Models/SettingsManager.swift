@@ -54,6 +54,7 @@ class SettingsManager {
     private let dailyBestTimesKey = "settings_daily_best_times"
     private let audioThemeKey = "settings_audio_theme"
     private let visualThemeKey = "settings_visual_theme"
+    private let hasCompletedOnboardingKey = "settings_has_completed_onboarding"
 
     // MARK: - Accessibility
 
@@ -116,6 +117,14 @@ class SettingsManager {
     var defaultGridSize: GridSize {
         didSet {
             defaults.set(defaultGridSize.rawValue, forKey: defaultGridSizeKey)
+        }
+    }
+
+    // MARK: - Onboarding
+
+    var hasCompletedOnboarding: Bool {
+        didSet {
+            defaults.set(hasCompletedOnboarding, forKey: hasCompletedOnboardingKey)
         }
     }
 
@@ -222,6 +231,9 @@ class SettingsManager {
         } else {
             self.defaultGridSize = .classic
         }
+
+        // Load onboarding state
+        self.hasCompletedOnboarding = defaults.bool(forKey: hasCompletedOnboardingKey)
 
         // Load daily challenge settings
         self.dailyStreak = defaults.integer(forKey: dailyStreakKey)

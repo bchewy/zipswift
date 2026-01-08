@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var settings = SettingsManager.shared
     @State private var showResetConfirmation = false
     @State private var showClearHistoryConfirmation = false
+    @State private var showTutorial = false
 
     private let historyManager = GameHistoryManager.shared
 
@@ -107,6 +108,17 @@ struct SettingsView: View {
                     Text("This will permanently delete all your game records and statistics.")
                 }
 
+                // MARK: - Help
+                Section {
+                    Button {
+                        showTutorial = true
+                    } label: {
+                        Label("Replay Tutorial", systemImage: "graduationcap")
+                    }
+                } header: {
+                    Text("Help")
+                }
+
                 // MARK: - About
                 Section {
                     Button {
@@ -179,6 +191,9 @@ struct SettingsView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("This action cannot be undone. All your game records will be permanently deleted.")
+            }
+            .fullScreenCover(isPresented: $showTutorial) {
+                OnboardingView()
             }
             .tint(settings.accentColor.color)
         }
