@@ -3,7 +3,23 @@
 A SwiftUI iOS puzzle game inspired by LinkedIn's Zip. Draw a path through a 6x6 grid, visiting numbered nodes in order while filling every cell.
 
 
+## Screenshots
+
+<p align="center">
+  <img src="showcase/1.jpeg" width="24%" />
+  <img src="showcase/2.jpeg" width="24%" />
+  <img src="showcase/3.jpeg" width="24%" />
+  <img src="showcase/4.jpeg" width="24%" />
+</p>
+
+<p align="center">
+  <img src="showcase/5.jpeg" width="24%" />
+  <img src="showcase/6.jpeg" width="24%" />
+  <img src="showcase/7.jpeg" width="24%" />
+</p>
+
 ## Gameplay
+
 https://github.com/user-attachments/assets/274d2de8-2c54-46bd-9051-4e395fa29775
 
 - **Objective:** Draw a single continuous path through all 36 cells
