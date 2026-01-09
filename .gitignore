@@ -42,3 +42,9 @@ iOSInjectionProject/
 *.p12
 *.key
 GoogleService-Info.plist
+
+# Ralph automation
+prompt.md
+ralph.sh
+tasks.json
+progress.txt
