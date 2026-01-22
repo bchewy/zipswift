@@ -64,18 +64,24 @@ struct GameView: View {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.title3)
                     }
+                    .accessibilityLabel("Game history")
+                    .accessibilityHint("View your past games")
 
                     // Settings button
                     Button(action: { showSettings = true }) {
                         Image(systemName: "gearshape")
                             .font(.title3)
                     }
+                    .accessibilityLabel("Settings")
+                    .accessibilityHint("Adjust game settings")
 
                     // Achievements button
                     Button(action: { showAchievements = true }) {
                         Image(systemName: "trophy")
                             .font(.title3)
                     }
+                    .accessibilityLabel("Achievements")
+                    .accessibilityHint("View your achievements")
 
                     // Daily Challenge button
                     Button(action: { showDailyChallenge = true }) {
@@ -94,18 +100,24 @@ struct GameView: View {
                             }
                         }
                     }
+                    .accessibilityLabel("Daily challenge")
+                    .accessibilityHint(settings.dailyStreak > 0 ? "Play today's puzzle, \(settings.dailyStreak) day streak" : "Play today's puzzle")
 
                     // Level Packs button
                     Button(action: { showLevelPacks = true }) {
                         Image(systemName: "square.grid.3x3")
                             .font(.title3)
                     }
+                    .accessibilityLabel("Level packs")
+                    .accessibilityHint("Browse curated puzzle packs")
 
                     // Challenge Modes button
                     Button(action: { showChallengeModes = true }) {
                         Image(systemName: "bolt.fill")
                             .font(.title3)
                     }
+                    .accessibilityLabel("Challenge modes")
+                    .accessibilityHint("Play special challenge modes")
 
                     // Game Center Leaderboards button
                     if gameCenterManager.isAuthenticated {
@@ -113,6 +125,8 @@ struct GameView: View {
                             Image(systemName: "chart.bar.fill")
                                 .font(.title3)
                         }
+                        .accessibilityLabel("Leaderboards")
+                        .accessibilityHint("View Game Center leaderboards")
                     }
 
                     Spacer()
@@ -173,6 +187,8 @@ struct GameView: View {
                                 .font(.subheadline)
                         }
                     }
+                    .accessibilityLabel("New game")
+                    .accessibilityHint("Start a new puzzle")
                 }
                 .padding(.horizontal, 16)
 
@@ -260,6 +276,9 @@ struct GameView: View {
                     }
                     .disabled(hintsUsedThisGame >= 3 || showingHint)
                     .opacity(hintsUsedThisGame >= 3 ? 0.5 : 1.0)
+                    .accessibilityLabel("Hint")
+                    .accessibilityHint(hintsUsedThisGame < 3 ? "Show next cells in solution" : "No hints remaining")
+                    .accessibilityValue("\(3 - hintsUsedThisGame) hints remaining")
 
                     // Undo button with long press for undo all
                     Button(action: {

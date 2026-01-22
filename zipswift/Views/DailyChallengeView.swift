@@ -86,9 +86,10 @@ struct DailyChallengeView: View {
                             .stroke(settings.accentColor.color, lineWidth: 3)
                             .padding(.horizontal, 12)
 
-                        GridView(
+                        AccessibleGridView(
                             gameState: gameState,
-                            onInvalidMove: triggerInvalidMoveHaptic
+                            onInvalidMove: triggerInvalidMoveHaptic,
+                            hintCells: []
                         )
                         .padding(.horizontal, 16)
                     }
@@ -111,6 +112,9 @@ struct DailyChallengeView: View {
                     }
                     .disabled(gameState.path.count <= 1)
                     .opacity(gameState.path.count <= 1 ? 0.5 : 1.0)
+                    .accessibilityLabel("Undo")
+                    .accessibilityHint(gameState.path.count > 1 ? "Undo last move" : "No moves to undo")
+                    .accessibilityValue("\(gameState.path.count - 1) moves available")
 
                     Text("Daily Challenge")
                         .font(.caption)

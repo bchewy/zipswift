@@ -43,6 +43,8 @@ struct ChallengeGameView: View {
                         Image(systemName: "xmark")
                             .font(.title3)
                     }
+                    .accessibilityLabel("Close")
+                    .accessibilityHint("Return to main menu")
 
                     Spacer()
 
@@ -71,6 +73,8 @@ struct ChallengeGameView: View {
                         Image(systemName: "arrow.clockwise")
                             .font(.title3)
                     }
+                    .accessibilityLabel("New puzzle")
+                    .accessibilityHint("Generate a new puzzle")
                 }
                 .padding(.horizontal, 16)
 
@@ -78,9 +82,10 @@ struct ChallengeGameView: View {
 
                 Spacer()
 
-                GridView(
+                AccessibleGridView(
                     gameState: gameState,
-                    onInvalidMove: triggerInvalidMoveHaptic
+                    onInvalidMove: triggerInvalidMoveHaptic,
+                    hintCells: []
                 )
                 .padding(.horizontal, 16)
 
@@ -101,6 +106,9 @@ struct ChallengeGameView: View {
                     }
                     .disabled(gameState.path.count <= 1)
                     .opacity(gameState.path.count <= 1 ? 0.5 : 1.0)
+                    .accessibilityLabel("Undo")
+                    .accessibilityHint(gameState.path.count > 1 ? "Undo last move" : "No moves to undo")
+                    .accessibilityValue("\(gameState.path.count - 1) moves available")
                 }
             }
             .padding(.vertical, 16)
