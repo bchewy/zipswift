@@ -138,11 +138,11 @@ struct SettingsView: View {
                         Label("Rate ZipSwift", systemImage: "star")
                     }
 
-                    Link(destination: URL(string: "https://example.com/privacy")!) {
+                    Link(destination: URL(string: "https://zipswift.bchewy.com/privacy")!) {
                         Label("Privacy Policy", systemImage: "hand.raised")
                     }
 
-                    Link(destination: URL(string: "https://example.com/support")!) {
+                    Link(destination: URL(string: "https://zipswift.bchewy.com/support")!) {
                         Label("Support", systemImage: "questionmark.circle")
                     }
                 } header: {
