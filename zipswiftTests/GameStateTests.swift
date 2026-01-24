@@ -318,17 +318,17 @@ struct GameStateTests {
             size: 2,
             numberedCells: [
                 1: GridPoint(row: 0, col: 0),
-                2: GridPoint(row: 1, col: 1)
+                2: GridPoint(row: 1, col: 0)
             ],
             maxNumber: 2
         )
         var state = GameState(level: smallLevel)
 
-        // Visit all 4 cells in order: (0,0) -> (0,1) -> (1,1) -> done with numbers
-        // Path: (0,0) already visited, need to visit (0,1), (1,1) while hitting all cells
+        // Visit all 4 cells and end on the final node
+        // Path: (0,0)[1] -> (0,1) -> (1,1) -> (1,0)[2]
         _ = state.visit(GridPoint(row: 0, col: 1))
-        _ = state.visit(GridPoint(row: 1, col: 1)) // numbered cell 2
-        _ = state.visit(GridPoint(row: 1, col: 0))
+        _ = state.visit(GridPoint(row: 1, col: 1))
+        _ = state.visit(GridPoint(row: 1, col: 0)) // numbered cell 2
 
         #expect(state.visited.count == 4)
         #expect(state.currentTarget > smallLevel.maxNumber)
@@ -405,17 +405,17 @@ struct GameStateTests {
             numberedCells: [
                 1: GridPoint(row: 0, col: 0),
                 2: GridPoint(row: 0, col: 1),
-                3: GridPoint(row: 1, col: 1)
+                3: GridPoint(row: 1, col: 0)
             ],
             maxNumber: 3
         )
         var state = GameState(level: level)
 
         // Path must visit nodes 1, 2, 3 in order
-        // (0,0)[1] -> (0,1)[2] -> (1,1)[3] -> (1,0)
+        // (0,0)[1] -> (0,1)[2] -> (1,1) -> (1,0)[3]
         _ = state.visit(GridPoint(row: 0, col: 1)) // node 2
-        _ = state.visit(GridPoint(row: 1, col: 1)) // node 3
-        _ = state.visit(GridPoint(row: 1, col: 0))
+        _ = state.visit(GridPoint(row: 1, col: 1))
+        _ = state.visit(GridPoint(row: 1, col: 0)) // node 3
 
         // All 4 cells visited, all nodes reached in order
         #expect(state.visited.count == 4)
@@ -444,6 +444,32 @@ struct GameStateTests {
         // Let's verify we can't visit node 3 before node 2
         #expect(state.currentTarget == 2)
         #expect(!state.canVisit(GridPoint(row: 0, col: 2))) // Can't visit node 3 yet
+    }
+
+    @Test func cannotMoveForwardAfterFinalNodeButCanBacktrack() {
+        let level = LevelDefinition(
+            size: 2,
+            numberedCells: [
+                1: GridPoint(row: 0, col: 0),
+                2: GridPoint(row: 0, col: 1)
+            ],
+            maxNumber: 2
+        )
+        var state = GameState(level: level)
+
+        // Reach final node 2
+        _ = state.visit(GridPoint(row: 0, col: 1))
+        #expect(state.currentTarget > level.maxNumber)
+
+        // Forward move should be blocked
+        let forward = GridPoint(row: 1, col: 1)
+        #expect(!state.canVisit(forward))
+        #expect(!state.visit(forward))
+        #expect(state.currentPosition == GridPoint(row: 0, col: 1))
+
+        // Backtracking should still be allowed
+        let back = GridPoint(row: 0, col: 0)
+        #expect(state.canVisit(back))
     }
 
     // MARK: - Reset Tests

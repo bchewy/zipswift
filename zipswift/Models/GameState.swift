@@ -45,6 +45,11 @@ class GameState {
             return true
         }
 
+        // If final node already reached, only allow backtracking
+        if currentTarget > level.maxNumber {
+            return false
+        }
+
         // If already visited, cannot visit again (unless backtracking handled above)
         if visited.contains(point) {
             return false
