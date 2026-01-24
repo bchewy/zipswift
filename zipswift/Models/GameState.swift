@@ -162,24 +162,18 @@ class GameState {
     }
 
     private func verifyNodesInOrder() -> Bool {
-        // Find the index of each numbered node in the path
-        var lastIndex = -1
+        var expectedNumber = 1
 
-        for number in 1...level.maxNumber {
-            guard let nodePosition = level.numberedCells[number],
-                  let pathIndex = path.firstIndex(of: nodePosition) else {
-                // Node not found in path
-                return false
+        for point in path {
+            if let number = level.numberAt(point) {
+                if number != expectedNumber {
+                    return false
+                }
+                expectedNumber += 1
             }
-
-            // Ensure this node appears after the previous node in the path
-            if pathIndex <= lastIndex {
-                return false
-            }
-            lastIndex = pathIndex
         }
 
-        return true
+        return expectedNumber > level.maxNumber
     }
 
     func reset() {

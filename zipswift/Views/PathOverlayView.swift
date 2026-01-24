@@ -15,6 +15,7 @@ struct PathOverlayView: View {
 
     @State private var pathProgress: CGFloat = 1.0
     @State private var glowOpacity: Double = 0.0
+    @State private var cachedPath: Path = Path()
 
     private var theme: VisualTheme {
         SettingsManager.shared.visualTheme
@@ -36,18 +37,8 @@ struct PathOverlayView: View {
         ZStack {
             if pathStyle.glowRadius > 0 && path.count >= 1 {
                 Canvas { context, _ in
-                    var swiftUIPath = Path()
-
-                    let firstPoint = centerForCell(path[0])
-                    swiftUIPath.move(to: firstPoint)
-
-                    for i in 1..<path.count {
-                        let point = centerForCell(path[i])
-                        swiftUIPath.addLine(to: point)
-                    }
-
                     context.stroke(
-                        swiftUIPath,
+                        cachedPath,
                         with: .color(pathColor.opacity(0.4)),
                         style: StrokeStyle(
                             lineWidth: pathStyle.lineWidth + pathStyle.glowRadius,
@@ -62,19 +53,9 @@ struct PathOverlayView: View {
             Canvas { context, _ in
                 guard path.count >= 1 else { return }
 
-                var swiftUIPath = Path()
-
-                let firstPoint = centerForCell(path[0])
-                swiftUIPath.move(to: firstPoint)
-
-                for i in 1..<path.count {
-                    let point = centerForCell(path[i])
-                    swiftUIPath.addLine(to: point)
-                }
-
                 if isWinning && !reduceMotion {
                     context.stroke(
-                        swiftUIPath,
+                        cachedPath,
                         with: .color(pathColor.opacity(glowOpacity * 0.5)),
                         style: StrokeStyle(
                             lineWidth: pathStyle.lineWidth + 8,
@@ -85,7 +66,7 @@ struct PathOverlayView: View {
                 }
 
                 context.stroke(
-                    swiftUIPath.trimmedPath(from: 0, to: pathProgress),
+                    cachedPath.trimmedPath(from: 0, to: pathProgress),
                     with: .color(pathColor),
                     style: StrokeStyle(
                         lineWidth: pathStyle.lineWidth,
@@ -95,6 +76,18 @@ struct PathOverlayView: View {
                     )
                 )
             }
+        }
+        .onAppear {
+            rebuildCachedPath()
+        }
+        .onChange(of: path) { _, _ in
+            rebuildCachedPath()
+        }
+        .onChange(of: cellSize) { _, _ in
+            rebuildCachedPath()
+        }
+        .onChange(of: gridOrigin) { _, _ in
+            rebuildCachedPath()
         }
         .onChange(of: path.count) { oldCount, newCount in
             guard !reduceMotion else { return }
@@ -119,6 +112,20 @@ struct PathOverlayView: View {
         let x = gridOrigin.x + CGFloat(gridPoint.col) * cellSize + cellSize / 2
         let y = gridOrigin.y + CGFloat(gridPoint.row) * cellSize + cellSize / 2
         return CGPoint(x: x, y: y)
+    }
+
+    private func rebuildCachedPath() {
+        guard !path.isEmpty else {
+            cachedPath = Path()
+            return
+        }
+
+        var newPath = Path()
+        newPath.move(to: centerForCell(path[0]))
+        for i in 1..<path.count {
+            newPath.addLine(to: centerForCell(path[i]))
+        }
+        cachedPath = newPath
     }
 }
 

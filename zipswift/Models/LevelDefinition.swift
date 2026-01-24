@@ -10,12 +10,16 @@ import Foundation
 struct LevelDefinition {
     let size: Int
     let numberedCells: [Int: GridPoint]
+    private let numberedCellsByPosition: [GridPoint: Int]
     let maxNumber: Int
     let solutionPath: [GridPoint]?
 
     init(size: Int = 6, numberedCells: [Int: GridPoint], maxNumber: Int, solutionPath: [GridPoint]? = nil) {
         self.size = size
         self.numberedCells = numberedCells
+        self.numberedCellsByPosition = Dictionary(
+            uniqueKeysWithValues: numberedCells.map { ($0.value, $0.key) }
+        )
         self.maxNumber = maxNumber
         self.solutionPath = solutionPath
     }
@@ -25,12 +29,7 @@ struct LevelDefinition {
     }
 
     func numberAt(_ point: GridPoint) -> Int? {
-        for (number, position) in numberedCells {
-            if position == point {
-                return number
-            }
-        }
-        return nil
+        numberedCellsByPosition[point]
     }
 
     func isNumberedCell(_ point: GridPoint) -> Bool {
