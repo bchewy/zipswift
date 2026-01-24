@@ -80,7 +80,9 @@ class LevelProgressManager {
     }
 
     func isPackUnlocked(_ pack: LevelPack) -> Bool {
-        totalPackStars >= pack.requiredStars
+        // Count both pack stars and regular game stars toward unlocking packs
+        let totalStars = totalPackStars + GameHistoryManager.shared.totalStars
+        return totalStars >= pack.requiredStars
     }
 
     private func progressKey(packId: String, levelIndex: Int) -> String {

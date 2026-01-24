@@ -14,7 +14,13 @@ struct LevelPacksView: View {
     @State private var selectedPack: LevelPack?
 
     private let progressManager = LevelProgressManager.shared
+    private let historyManager = GameHistoryManager.shared
     private var accentColor: Color { SettingsManager.shared.accentColor.color }
+    
+    /// Combined stars from both pack levels and regular games
+    private var totalStars: Int {
+        progressManager.totalPackStars + historyManager.totalStars
+    }
 
     var body: some View {
         NavigationStack {
@@ -23,7 +29,7 @@ struct LevelPacksView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "star.fill")
                             .foregroundColor(.yellow)
-                        Text("\(progressManager.totalPackStars) stars collected")
+                        Text("\(totalStars) stars collected")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -33,7 +39,7 @@ struct LevelPacksView: View {
                         LevelPackCard(
                             pack: pack,
                             isUnlocked: progressManager.isPackUnlocked(pack),
-                            currentStars: progressManager.totalPackStars,
+                            currentStars: totalStars,
                             completedLevels: progressManager.completedLevelsInPack(pack.id),
                             packStars: progressManager.starsForPack(pack.id)
                         ) {

@@ -70,11 +70,15 @@ enum Difficulty: String, CaseIterable, Codable {
 struct LevelGenerator {
 
     /// Generates a random Hamiltonian path (visits every cell exactly once)
-    /// Uses backtracking with random neighbor selection
+    /// Uses Warnsdorff-style heuristic with randomized tie-breaks
     static func generateHamiltonianPath(size: Int) -> [GridPoint] {
         let totalCells = size * size
         var path: [GridPoint] = []
         var visited: Set<GridPoint> = []
+        var steps = 0
+        var aborted = false
+        let startTime = ProcessInfo.processInfo.systemUptime
+        let timeLimit: TimeInterval = size >= 7 ? 0.2 : 0.12
 
         // Always start at (0,0) for consistency
         let start = GridPoint(row: 0, col: 0)
@@ -91,7 +95,36 @@ struct LevelGenerator {
             }
         }
 
+        func onwardDegree(_ point: GridPoint) -> Int {
+            getNeighbors(point)
+                .filter { !visited.contains($0) }
+                .count
+        }
+
+        func orderedNeighbors(_ point: GridPoint) -> [GridPoint] {
+            let candidates = getNeighbors(point)
+                .filter { !visited.contains($0) }
+                .shuffled()
+
+            return candidates.sorted { lhs, rhs in
+                let lhsDegree = onwardDegree(lhs)
+                let rhsDegree = onwardDegree(rhs)
+                return lhsDegree < rhsDegree
+            }
+        }
+
         func findPath(current: GridPoint) -> Bool {
+            if aborted {
+                return false
+            }
+            steps += 1
+            if steps % 512 == 0 {
+                let elapsed = ProcessInfo.processInfo.systemUptime - startTime
+                if elapsed > timeLimit {
+                    aborted = true
+                    return false
+                }
+            }
             path.append(current)
             visited.insert(current)
 
@@ -99,10 +132,7 @@ struct LevelGenerator {
                 return true // Found complete path
             }
 
-            // Get unvisited neighbors in random order
-            let neighbors = getNeighbors(current)
-                .filter { !visited.contains($0) }
-                .shuffled()
+            let neighbors = orderedNeighbors(current)
 
             for neighbor in neighbors {
                 if findPath(current: neighbor) {
@@ -116,7 +146,49 @@ struct LevelGenerator {
             return false
         }
 
-        _ = findPath(current: start)
+        if findPath(current: start) {
+            return path
+        }
+
+        return generateSnakePath(size: size, orientation: Bool.random() ? .rows : .columns)
+    }
+
+    private enum SnakeOrientation {
+        case rows
+        case columns
+    }
+
+    private static func generateSnakePath(size: Int, orientation: SnakeOrientation) -> [GridPoint] {
+        var path: [GridPoint] = []
+        path.reserveCapacity(size * size)
+
+        switch orientation {
+        case .rows:
+            for row in 0..<size {
+                if row.isMultiple(of: 2) {
+                    for col in 0..<size {
+                        path.append(GridPoint(row: row, col: col))
+                    }
+                } else {
+                    for col in stride(from: size - 1, through: 0, by: -1) {
+                        path.append(GridPoint(row: row, col: col))
+                    }
+                }
+            }
+        case .columns:
+            for col in 0..<size {
+                if col.isMultiple(of: 2) {
+                    for row in 0..<size {
+                        path.append(GridPoint(row: row, col: col))
+                    }
+                } else {
+                    for row in stride(from: size - 1, through: 0, by: -1) {
+                        path.append(GridPoint(row: row, col: col))
+                    }
+                }
+            }
+        }
+
         return path
     }
 

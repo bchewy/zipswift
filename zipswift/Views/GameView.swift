@@ -35,6 +35,8 @@ struct GameView: View {
     @State private var currentPackLevelIndex: Int?
     @State private var showRestartConfirmation = false
     @State private var isGridCollapsed = false
+    @State private var isGeneratingLevel = false
+    @State private var levelGenerationTask: Task<Void, Never>?
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -332,6 +334,18 @@ struct GameView: View {
                     achievementManager.clearRecentlyUnlocked()
                 }
             }
+
+            if isGeneratingLevel {
+                ZStack {
+                    Color.black.opacity(0.15)
+                        .ignoresSafeArea()
+                    ProgressView("Generating level...")
+                        .padding(24)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(12)
+                }
+                .transition(.opacity)
+            }
         }
         .sheet(isPresented: $showHistory) {
             HistoryView()
@@ -454,16 +468,28 @@ struct GameView: View {
         currentPackId = nil
         currentPackLevelIndex = nil
 
-        let newLevel = LevelGenerator.generateLevel(difficulty: currentDifficulty, gridSize: currentGridSize)
-        gameState = GameState(level: newLevel)
-        elapsedTime = 0
-        finalTime = 0
-        previousPathCount = 1
-        previousTarget = 2
-        undoUsedThisGame = false
-        hintsUsedThisGame = 0
-        showingHint = false
-        hintCells = []
+        levelGenerationTask?.cancel()
+        isGeneratingLevel = true
+        let difficulty = currentDifficulty
+        let gridSize = currentGridSize
+
+        levelGenerationTask = Task.detached(priority: .userInitiated) {
+            let newLevel = LevelGenerator.generateLevel(difficulty: difficulty, gridSize: gridSize)
+            if Task.isCancelled { return }
+            await MainActor.run {
+                if Task.isCancelled { return }
+                gameState = GameState(level: newLevel)
+                elapsedTime = 0
+                finalTime = 0
+                previousPathCount = 1
+                previousTarget = 2
+                undoUsedThisGame = false
+                hintsUsedThisGame = 0
+                showingHint = false
+                hintCells = []
+                isGeneratingLevel = false
+            }
+        }
     }
 
     private func loadPackLevel(level: LevelDefinition, packId: String, levelIndex: Int) {
@@ -475,6 +501,8 @@ struct GameView: View {
         currentPackId = packId
         currentPackLevelIndex = levelIndex
 
+        levelGenerationTask?.cancel()
+        isGeneratingLevel = false
         gameState = GameState(level: level)
         elapsedTime = 0
         finalTime = 0
