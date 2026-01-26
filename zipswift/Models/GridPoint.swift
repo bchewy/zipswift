@@ -7,11 +7,16 @@
 
 import Foundation
 
-struct GridPoint: Hashable, Equatable {
-    let row: Int
-    let col: Int
+struct GridPoint: Hashable, Equatable, Sendable {
+    nonisolated let row: Int
+    nonisolated let col: Int
 
-    func isAdjacent(to other: GridPoint) -> Bool {
+    nonisolated init(row: Int, col: Int) {
+        self.row = row
+        self.col = col
+    }
+
+    nonisolated func isAdjacent(to other: GridPoint) -> Bool {
         let rowDiff = abs(row - other.row)
         let colDiff = abs(col - other.col)
         // Manhattan distance must be exactly 1 (orthogonal adjacency)

@@ -7,15 +7,15 @@
 
 import Foundation
 
-enum GridSize: Int, CaseIterable, Codable {
+enum GridSize: Int, CaseIterable, Codable, Sendable {
     case quick = 5
     case classic = 6
     case extended = 7
     case marathon = 8
 
-    var size: Int { rawValue }
+    nonisolated var size: Int { rawValue }
 
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .quick: return "5×5 Quick"
         case .classic: return "6×6 Classic"
@@ -24,17 +24,17 @@ enum GridSize: Int, CaseIterable, Codable {
         }
     }
 
-    var shortName: String {
+    nonisolated var shortName: String {
         "\(size)×\(size)"
     }
 }
 
-enum Difficulty: String, CaseIterable, Codable {
+enum Difficulty: String, CaseIterable, Codable, Sendable {
     case easy
     case medium
     case hard
 
-    func nodeCount(for gridSize: GridSize) -> Int {
+    nonisolated func nodeCount(for gridSize: GridSize) -> Int {
         switch (self, gridSize) {
         case (.easy, .quick): return 8
         case (.medium, .quick): return 5
@@ -54,11 +54,11 @@ enum Difficulty: String, CaseIterable, Codable {
         }
     }
 
-    var nodeCount: Int {
+    nonisolated var nodeCount: Int {
         nodeCount(for: .classic)
     }
 
-    var iconName: String {
+    nonisolated var iconName: String {
         switch self {
         case .easy: return "DifficultyEasy"
         case .medium: return "DifficultyMedium"
@@ -71,7 +71,7 @@ struct LevelGenerator {
 
     /// Generates a random Hamiltonian path (visits every cell exactly once)
     /// Uses Warnsdorff-style heuristic with randomized tie-breaks
-    static func generateHamiltonianPath(size: Int) -> [GridPoint] {
+    nonisolated static func generateHamiltonianPath(size: Int) -> [GridPoint] {
         let totalCells = size * size
         var path: [GridPoint] = []
         var visited: Set<GridPoint> = []
@@ -150,20 +150,14 @@ struct LevelGenerator {
             return path
         }
 
-        return generateSnakePath(size: size, orientation: Bool.random() ? .rows : .columns)
+        return generateSnakePath(size: size, useRows: Bool.random())
     }
 
-    private enum SnakeOrientation {
-        case rows
-        case columns
-    }
-
-    private static func generateSnakePath(size: Int, orientation: SnakeOrientation) -> [GridPoint] {
+    private nonisolated static func generateSnakePath(size: Int, useRows: Bool) -> [GridPoint] {
         var path: [GridPoint] = []
         path.reserveCapacity(size * size)
 
-        switch orientation {
-        case .rows:
+        if useRows {
             for row in 0..<size {
                 if row.isMultiple(of: 2) {
                     for col in 0..<size {
@@ -175,7 +169,7 @@ struct LevelGenerator {
                     }
                 }
             }
-        case .columns:
+        } else {
             for col in 0..<size {
                 if col.isMultiple(of: 2) {
                     for row in 0..<size {
@@ -193,7 +187,7 @@ struct LevelGenerator {
     }
 
     /// Generates a complete level with numbered nodes placed along a valid path
-    static func generateLevel(size: Int = 6, numberOfNodes: Int) -> LevelDefinition {
+    nonisolated static func generateLevel(size: Int = 6, numberOfNodes: Int) -> LevelDefinition {
         let path = generateHamiltonianPath(size: size)
 
         var numberedCells: [Int: GridPoint] = [:]
@@ -226,12 +220,12 @@ struct LevelGenerator {
     }
 
     /// Generates a level with difficulty-based node count
-    static func generateLevel(difficulty: Difficulty, size: Int = 6) -> LevelDefinition {
+    nonisolated static func generateLevel(difficulty: Difficulty, size: Int = 6) -> LevelDefinition {
         return generateLevel(size: size, numberOfNodes: difficulty.nodeCount)
     }
 
     /// Generates a level with difficulty and grid size
-    static func generateLevel(difficulty: Difficulty, gridSize: GridSize) -> LevelDefinition {
+    nonisolated static func generateLevel(difficulty: Difficulty, gridSize: GridSize) -> LevelDefinition {
         let nodeCount = difficulty.nodeCount(for: gridSize)
         return generateLevel(size: gridSize.size, numberOfNodes: nodeCount)
     }

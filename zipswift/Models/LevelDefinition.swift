@@ -7,14 +7,14 @@
 
 import Foundation
 
-struct LevelDefinition {
-    let size: Int
-    let numberedCells: [Int: GridPoint]
-    private let numberedCellsByPosition: [GridPoint: Int]
-    let maxNumber: Int
-    let solutionPath: [GridPoint]?
+struct LevelDefinition: Sendable {
+    nonisolated let size: Int
+    nonisolated let numberedCells: [Int: GridPoint]
+    nonisolated private let numberedCellsByPosition: [GridPoint: Int]
+    nonisolated let maxNumber: Int
+    nonisolated let solutionPath: [GridPoint]?
 
-    init(size: Int = 6, numberedCells: [Int: GridPoint], maxNumber: Int, solutionPath: [GridPoint]? = nil) {
+    nonisolated init(size: Int = 6, numberedCells: [Int: GridPoint], maxNumber: Int, solutionPath: [GridPoint]? = nil) {
         self.size = size
         self.numberedCells = numberedCells
         self.numberedCellsByPosition = Dictionary(
@@ -24,15 +24,15 @@ struct LevelDefinition {
         self.solutionPath = solutionPath
     }
 
-    var startPosition: GridPoint {
+    nonisolated var startPosition: GridPoint {
         numberedCells[1]!
     }
 
-    func numberAt(_ point: GridPoint) -> Int? {
+    nonisolated func numberAt(_ point: GridPoint) -> Int? {
         numberedCellsByPosition[point]
     }
 
-    func isNumberedCell(_ point: GridPoint) -> Bool {
+    nonisolated func isNumberedCell(_ point: GridPoint) -> Bool {
         numberAt(point) != nil
     }
 }
