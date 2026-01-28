@@ -588,6 +588,114 @@ struct GameStateTests {
         #expect(state.path.count == 3) // unchanged
     }
 
+    // MARK: - Pause/Resume Tests
+
+    @Test func pauseSetsIsPaused() {
+        let level = Self.makeTestLevel()
+        var state = GameState(level: level)
+
+        _ = state.visit(GridPoint(row: 0, col: 1))
+        state.pause()
+
+        #expect(state.isPaused)
+    }
+
+    @Test func pauseIsNoOpBeforeFirstMove() {
+        let level = Self.makeTestLevel()
+        var state = GameState(level: level)
+
+        state.pause()
+
+        #expect(!state.isPaused)
+    }
+
+    @Test func pauseIsNoOpAfterWin() {
+        let smallLevel = LevelDefinition(
+            size: 2,
+            numberedCells: [
+                1: GridPoint(row: 0, col: 0),
+                2: GridPoint(row: 1, col: 0)
+            ],
+            maxNumber: 2
+        )
+        var state = GameState(level: smallLevel)
+
+        _ = state.visit(GridPoint(row: 0, col: 1))
+        _ = state.visit(GridPoint(row: 1, col: 1))
+        _ = state.visit(GridPoint(row: 1, col: 0))
+        #expect(state.isComplete)
+
+        state.pause()
+
+        #expect(!state.isPaused)
+    }
+
+    @Test func resumeClearsIsPaused() {
+        let level = Self.makeTestLevel()
+        var state = GameState(level: level)
+
+        _ = state.visit(GridPoint(row: 0, col: 1))
+        state.pause()
+        #expect(state.isPaused)
+
+        state.resume()
+
+        #expect(!state.isPaused)
+    }
+
+    @Test func canVisitReturnsFalseWhilePaused() {
+        let level = Self.makeTestLevel()
+        var state = GameState(level: level)
+
+        _ = state.visit(GridPoint(row: 0, col: 1))
+        state.pause()
+
+        #expect(!state.canVisit(GridPoint(row: 1, col: 1)))
+    }
+
+    @Test func resetClearsPauseState() {
+        let level = Self.makeTestLevel()
+        var state = GameState(level: level)
+
+        _ = state.visit(GridPoint(row: 0, col: 1))
+        state.pause()
+        #expect(state.isPaused)
+
+        state.reset()
+
+        #expect(!state.isPaused)
+        #expect(state.accumulatedPauseTime == 0)
+        #expect(state.pauseStartDate == nil)
+    }
+
+    @Test func doublePauseIsNoOp() {
+        let level = Self.makeTestLevel()
+        var state = GameState(level: level)
+
+        _ = state.visit(GridPoint(row: 0, col: 1))
+        state.pause()
+        let firstPauseDate = state.pauseStartDate
+
+        state.pause()
+
+        #expect(state.pauseStartDate == firstPauseDate)
+    }
+
+    @Test func doubleResumeIsNoOp() {
+        let level = Self.makeTestLevel()
+        var state = GameState(level: level)
+
+        _ = state.visit(GridPoint(row: 0, col: 1))
+        state.pause()
+        state.resume()
+
+        #expect(!state.isPaused)
+
+        state.resume()
+
+        #expect(!state.isPaused)
+    }
+
     // MARK: - isInPath Tests
 
     @Test func isInPathReturnsTrueForPathCells() {
@@ -610,6 +718,94 @@ struct GameStateTests {
 
         #expect(!state.isInPath(GridPoint(row: 5, col: 5)))
         #expect(!state.isInPath(GridPoint(row: 1, col: 1)))
+    }
+
+    // MARK: - Wall Tests
+
+    @Test func cannotVisitThroughWall() {
+        let level = LevelDefinition(
+            size: 6,
+            numberedCells: [
+                1: GridPoint(row: 0, col: 0),
+                2: GridPoint(row: 5, col: 5)
+            ],
+            maxNumber: 2,
+            walls: [Wall(GridPoint(row: 0, col: 0), GridPoint(row: 0, col: 1))]
+        )
+        let state = GameState(level: level)
+
+        #expect(!state.canVisit(GridPoint(row: 0, col: 1)))
+    }
+
+    @Test func canVisitAdjacentCellWithNoWall() {
+        let level = LevelDefinition(
+            size: 6,
+            numberedCells: [
+                1: GridPoint(row: 0, col: 0),
+                2: GridPoint(row: 5, col: 5)
+            ],
+            maxNumber: 2,
+            walls: [Wall(GridPoint(row: 0, col: 0), GridPoint(row: 0, col: 1))]
+        )
+        let state = GameState(level: level)
+
+        #expect(state.canVisit(GridPoint(row: 1, col: 0)))
+    }
+
+    @Test func wallBlocksBothDirections() {
+        let wall = Wall(GridPoint(row: 0, col: 1), GridPoint(row: 0, col: 0))
+        let level = LevelDefinition(
+            size: 6,
+            numberedCells: [
+                1: GridPoint(row: 0, col: 0),
+                2: GridPoint(row: 5, col: 5)
+            ],
+            maxNumber: 2,
+            walls: [wall]
+        )
+        let state = GameState(level: level)
+
+        #expect(!state.canVisit(GridPoint(row: 0, col: 1)))
+    }
+
+    @Test func levelWithNoWallsBehavesNormally() {
+        let level = LevelDefinition(
+            size: 6,
+            numberedCells: [
+                1: GridPoint(row: 0, col: 0),
+                2: GridPoint(row: 5, col: 5)
+            ],
+            maxNumber: 2
+        )
+        let state = GameState(level: level)
+
+        #expect(state.canVisit(GridPoint(row: 0, col: 1)))
+        #expect(state.canVisit(GridPoint(row: 1, col: 0)))
+    }
+
+    @Test func winConditionStillWorksWithWalls() {
+        let level = LevelDefinition(
+            size: 3,
+            numberedCells: [
+                1: GridPoint(row: 0, col: 0),
+                2: GridPoint(row: 2, col: 0)
+            ],
+            maxNumber: 2,
+            walls: [Wall(GridPoint(row: 0, col: 0), GridPoint(row: 0, col: 1))]
+        )
+        var state = GameState(level: level)
+
+        _ = state.visit(GridPoint(row: 1, col: 0))
+        _ = state.visit(GridPoint(row: 1, col: 1))
+        _ = state.visit(GridPoint(row: 0, col: 1))
+        _ = state.visit(GridPoint(row: 0, col: 2))
+        _ = state.visit(GridPoint(row: 1, col: 2))
+        _ = state.visit(GridPoint(row: 2, col: 2))
+        _ = state.visit(GridPoint(row: 2, col: 1))
+        _ = state.visit(GridPoint(row: 2, col: 0))
+
+        #expect(state.visited.count == 9)
+        #expect(state.isComplete)
     }
 
     // MARK: - undoToPreviousNode Tests

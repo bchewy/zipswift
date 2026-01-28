@@ -58,6 +58,26 @@ enum Difficulty: String, CaseIterable, Codable, Sendable {
         nodeCount(for: .classic)
     }
 
+    nonisolated func wallCount(for gridSize: GridSize) -> Int {
+        switch (self, gridSize) {
+        case (.easy, .quick): return 2
+        case (.medium, .quick): return 3
+        case (.hard, .quick): return 5
+
+        case (.easy, .classic): return 3
+        case (.medium, .classic): return 5
+        case (.hard, .classic): return 8
+
+        case (.easy, .extended): return 4
+        case (.medium, .extended): return 7
+        case (.hard, .extended): return 10
+
+        case (.easy, .marathon): return 5
+        case (.medium, .marathon): return 9
+        case (.hard, .marathon): return 13
+        }
+    }
+
     nonisolated var iconName: String {
         switch self {
         case .easy: return "DifficultyEasy"
@@ -186,8 +206,41 @@ struct LevelGenerator {
         return path
     }
 
+    private nonisolated static func generateWalls(path: [GridPoint], size: Int, count: Int) -> Set<Wall> {
+        guard count > 0 else { return [] }
+
+        var pathEdges = Set<Wall>()
+        for i in 0..<(path.count - 1) {
+            pathEdges.insert(Wall(path[i], path[i + 1]))
+        }
+
+        var candidates: [Wall] = []
+        for row in 0..<size {
+            for col in 0..<size {
+                let cell = GridPoint(row: row, col: col)
+                if col + 1 < size {
+                    let right = GridPoint(row: row, col: col + 1)
+                    let wall = Wall(cell, right)
+                    if !pathEdges.contains(wall) {
+                        candidates.append(wall)
+                    }
+                }
+                if row + 1 < size {
+                    let below = GridPoint(row: row + 1, col: col)
+                    let wall = Wall(cell, below)
+                    if !pathEdges.contains(wall) {
+                        candidates.append(wall)
+                    }
+                }
+            }
+        }
+
+        candidates.shuffle()
+        return Set(candidates.prefix(count))
+    }
+
     /// Generates a complete level with numbered nodes placed along a valid path
-    nonisolated static func generateLevel(size: Int = 6, numberOfNodes: Int) -> LevelDefinition {
+    nonisolated static func generateLevel(size: Int = 6, numberOfNodes: Int, wallCount: Int = 0) -> LevelDefinition {
         let path = generateHamiltonianPath(size: size)
 
         var numberedCells: [Int: GridPoint] = [:]
@@ -211,11 +264,14 @@ struct LevelGenerator {
             }
         }
 
+        let walls = generateWalls(path: path, size: size, count: wallCount)
+
         return LevelDefinition(
             size: size,
             numberedCells: numberedCells,
             maxNumber: numberOfNodes,
-            solutionPath: path
+            solutionPath: path,
+            walls: walls
         )
     }
 
@@ -227,6 +283,7 @@ struct LevelGenerator {
     /// Generates a level with difficulty and grid size
     nonisolated static func generateLevel(difficulty: Difficulty, gridSize: GridSize) -> LevelDefinition {
         let nodeCount = difficulty.nodeCount(for: gridSize)
-        return generateLevel(size: gridSize.size, numberOfNodes: nodeCount)
+        let walls = difficulty.wallCount(for: gridSize)
+        return generateLevel(size: gridSize.size, numberOfNodes: nodeCount, wallCount: walls)
     }
 }

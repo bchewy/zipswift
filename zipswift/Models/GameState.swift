@@ -15,6 +15,9 @@ class GameState {
     private(set) var currentTarget: Int
     private(set) var timerStart: Date?
     private(set) var isComplete: Bool
+    private(set) var isPaused: Bool
+    private(set) var accumulatedPauseTime: TimeInterval
+    private(set) var pauseStartDate: Date?
 
     init(level: LevelDefinition) {
         self.level = level
@@ -24,6 +27,9 @@ class GameState {
         self.currentTarget = 2
         self.timerStart = nil
         self.isComplete = false
+        self.isPaused = false
+        self.accumulatedPauseTime = 0
+        self.pauseStartDate = nil
     }
 
     var currentPosition: GridPoint {
@@ -34,11 +40,38 @@ class GameState {
         level.size * level.size
     }
 
+    var canPause: Bool {
+        timerStart != nil && !isComplete && !isPaused
+    }
+
+    var canResume: Bool {
+        isPaused
+    }
+
+    func pause() {
+        guard canPause else { return }
+        isPaused = true
+        pauseStartDate = Date()
+    }
+
+    func resume() {
+        guard canResume else { return }
+        if let start = pauseStartDate {
+            accumulatedPauseTime += Date().timeIntervalSince(start)
+        }
+        pauseStartDate = nil
+        isPaused = false
+    }
+
     func canVisit(_ point: GridPoint) -> Bool {
+        guard !isPaused else { return false }
+
         let current = currentPosition
 
         // Must be adjacent
         guard current.isAdjacent(to: point) else { return false }
+
+        guard !level.hasWall(between: current, and: point) else { return false }
 
         // Check if it's the previous cell (backtracking)
         if path.count >= 2 && path[path.count - 2] == point {
@@ -188,6 +221,9 @@ class GameState {
         currentTarget = 2
         timerStart = nil
         isComplete = false
+        isPaused = false
+        accumulatedPauseTime = 0
+        pauseStartDate = nil
     }
 
     func getHintCells(count: Int = 3) -> [GridPoint] {

@@ -53,6 +53,13 @@ struct GridView: View {
                     isWinning: gameState.isComplete
                 )
 
+                // Wall overlay
+                WallOverlayView(
+                    walls: gameState.level.walls,
+                    cellSize: cellSize,
+                    origin: gridOrigin
+                )
+
                 // Cell visit bounce indicator
                 if let visitedCell = recentlyVisitedCell {
                     CellVisitIndicator(
@@ -263,6 +270,38 @@ struct GridLinesView: View {
                 path.move(to: CGPoint(x: origin.x, y: y))
                 path.addLine(to: CGPoint(x: origin.x + CGFloat(gridSize) * cellSize, y: y))
                 context.stroke(path, with: .color(effectiveLineColor), lineWidth: effectiveLineWidth)
+            }
+        }
+    }
+}
+
+// MARK: - Wall Overlay View
+
+struct WallOverlayView: View {
+    let walls: Set<Wall>
+    let cellSize: CGFloat
+    let origin: CGPoint
+
+    var body: some View {
+        Canvas { context, _ in
+            for wall in walls {
+                var path = Path()
+                if wall.isHorizontalNeighbors {
+                    let rightCol = max(wall.cell1.col, wall.cell2.col)
+                    let x = origin.x + CGFloat(rightCol) * cellSize
+                    let y1 = origin.y + CGFloat(wall.cell1.row) * cellSize
+                    let y2 = y1 + cellSize
+                    path.move(to: CGPoint(x: x, y: y1))
+                    path.addLine(to: CGPoint(x: x, y: y2))
+                } else {
+                    let bottomRow = max(wall.cell1.row, wall.cell2.row)
+                    let y = origin.y + CGFloat(bottomRow) * cellSize
+                    let x1 = origin.x + CGFloat(wall.cell1.col) * cellSize
+                    let x2 = x1 + cellSize
+                    path.move(to: CGPoint(x: x1, y: y))
+                    path.addLine(to: CGPoint(x: x2, y: y))
+                }
+                context.stroke(path, with: .color(.primary), style: StrokeStyle(lineWidth: 4, lineCap: .round))
             }
         }
     }

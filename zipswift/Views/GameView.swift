@@ -195,7 +195,7 @@ struct GameView: View {
                 .padding(.horizontal, 16)
 
                 // Timer display
-                TimerView(elapsedTime: elapsedTime)
+                TimerView(elapsedTime: elapsedTime, isPaused: gameState.isPaused)
 
                 // Pack level indicator
                 if let packId = currentPackId,
@@ -217,11 +217,25 @@ struct GameView: View {
 
                 // Game grid with swipe to collapse/expand and double-tap to restart
                 if !isGridCollapsed {
-                    AccessibleGridView(
-                        gameState: gameState,
-                        onInvalidMove: triggerInvalidMoveHaptic,
-                        hintCells: hintCells
-                    )
+                    ZStack {
+                        AccessibleGridView(
+                            gameState: gameState,
+                            onInvalidMove: triggerInvalidMoveHaptic,
+                            hintCells: hintCells
+                        )
+                        .blur(radius: gameState.isPaused ? 12 : 0)
+                        .allowsHitTesting(!gameState.isPaused)
+
+                        if gameState.isPaused {
+                            VStack(spacing: 8) {
+                                Image(systemName: "pause.circle.fill")
+                                    .font(.system(size: 48))
+                                Text("Paused")
+                                    .font(.title2.weight(.semibold))
+                            }
+                            .foregroundColor(.secondary)
+                        }
+                    }
                     .padding(.horizontal, 16)
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .gesture(
@@ -259,50 +273,95 @@ struct GameView: View {
                 HStack(spacing: 16) {
                     // Hint button
                     Button(action: activateHint) {
-                        HStack {
+                        VStack(spacing: 4) {
                             Image(systemName: "lightbulb.fill")
-                            Text("Hint")
-                            if hintsUsedThisGame < 3 {
-                                Text("(\(3 - hintsUsedThisGame))")
-                                    .font(.caption)
-                            }
+                                .font(.title2)
+                            Text(hintsUsedThisGame < 3 ? "\(3 - hintsUsedThisGame) left" : "Used")
+                                .font(.caption2)
                         }
-                        .font(.headline)
+                        .frame(width: 56, height: 56)
                         .foregroundColor(settings.accentColor.color)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
                         .background(
-                            RoundedRectangle(cornerRadius: 10)
+                            RoundedRectangle(cornerRadius: 12)
                                 .stroke(settings.accentColor.color, lineWidth: 2)
                         )
                     }
-                    .disabled(hintsUsedThisGame >= 3 || showingHint)
-                    .opacity(hintsUsedThisGame >= 3 ? 0.5 : 1.0)
+                    .disabled(hintsUsedThisGame >= 3 || showingHint || gameState.isPaused)
+                    .opacity(hintsUsedThisGame >= 3 || gameState.isPaused ? 0.5 : 1.0)
                     .accessibilityLabel("Hint")
                     .accessibilityHint(hintsUsedThisGame < 3 ? "Show next cells in solution" : "No hints remaining")
                     .accessibilityValue("\(3 - hintsUsedThisGame) hints remaining")
 
+                    // Pause/Resume button
+                    Button(action: {
+                        if gameState.isPaused {
+                            gameState.resume()
+                        } else {
+                            gameState.pause()
+                        }
+                        triggerLightHaptic()
+                    }) {
+                        VStack(spacing: 4) {
+                            Image(systemName: gameState.isPaused ? "play.fill" : "pause.fill")
+                                .font(.title2)
+                            Text(gameState.isPaused ? "Resume" : "Pause")
+                                .font(.caption2)
+                        }
+                        .frame(width: 56, height: 56)
+                        .foregroundColor(settings.accentColor.color)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(settings.accentColor.color, lineWidth: 2)
+                        )
+                    }
+                    .disabled(!gameState.canPause && !gameState.canResume)
+                    .opacity(!gameState.canPause && !gameState.canResume ? 0.5 : 1.0)
+                    .accessibilityLabel(gameState.isPaused ? "Resume" : "Pause")
+                    .accessibilityHint(gameState.isPaused ? "Resume the game" : "Pause the game")
+
+                    // Reset button
+                    Button(action: resetCurrentPuzzle) {
+                        VStack(spacing: 4) {
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.title2)
+                            Text("Reset")
+                                .font(.caption2)
+                        }
+                        .frame(width: 56, height: 56)
+                        .foregroundColor(settings.accentColor.color)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(settings.accentColor.color, lineWidth: 2)
+                        )
+                    }
+                    .disabled(gameState.timerStart == nil || gameState.isComplete)
+                    .opacity(gameState.timerStart == nil || gameState.isComplete ? 0.5 : 1.0)
+                    .accessibilityLabel("Reset")
+                    .accessibilityHint("Restart the same puzzle from scratch")
+
                     // Undo button with long press for undo all
                     Button(action: {
                         undoUsedThisGame = true
-                        gameState.undo()
+                        gameState.undoToPreviousNode()
                         triggerLightHaptic()
                     }) {
-                        HStack {
+                        VStack(spacing: 4) {
                             Image(systemName: "arrow.uturn.backward")
+                                .font(.title2)
                             Text("Undo")
+                                .font(.caption2)
                         }
-                        .font(.headline)
+                        .frame(width: 56, height: 56)
                         .foregroundColor(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .background(settings.accentColor.color)
-                        .cornerRadius(10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(settings.accentColor.color)
+                        )
                     }
-                    .disabled(gameState.path.count <= 1)
-                    .opacity(gameState.path.count <= 1 ? 0.5 : 1.0)
+                    .disabled(gameState.path.count <= 1 || gameState.isPaused)
+                    .opacity(gameState.path.count <= 1 || gameState.isPaused ? 0.5 : 1.0)
                     .accessibilityLabel("Undo")
-                    .accessibilityHint(gameState.path.count > 1 ? "Tap to undo last move, \(gameState.path.count - 1) moves available" : "No moves to undo")
+                    .accessibilityHint(gameState.path.count > 1 ? "Tap to undo to previous node" : "No moves to undo")
                     .accessibilityValue("\(gameState.path.count - 1) moves available")
                     .simultaneousGesture(
                         LongPressGesture(minimumDuration: 0.5)
@@ -389,7 +448,7 @@ struct GameView: View {
             triggerLightHaptic()
         }
         .keyboardShortcut("r", modifiers: []) { generateNewGame() }
-        .keyboardShortcut("u", modifiers: []) { if gameState.path.count > 1 { undoUsedThisGame = true; gameState.undo() } }
+        .keyboardShortcut("u", modifiers: []) { if gameState.path.count > 1 { undoUsedThisGame = true; gameState.undoToPreviousNode() } }
         .keyboardShortcut("n", modifiers: []) { generateNewGame() }
         .onChange(of: gameState.isComplete) { _, isComplete in
             if isComplete {
@@ -520,8 +579,8 @@ struct GameView: View {
         timerTask?.cancel()
         timerTask = Task { @MainActor in
             while !Task.isCancelled {
-                if let start = gameState.timerStart {
-                    elapsedTime = Date().timeIntervalSince(start)
+                if let start = gameState.timerStart, !gameState.isPaused {
+                    elapsedTime = Date().timeIntervalSince(start) - gameState.accumulatedPauseTime
                 }
                 try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
             }
@@ -536,6 +595,9 @@ struct GameView: View {
     private func handleScenePhaseChange(from oldPhase: ScenePhase, to newPhase: ScenePhase) {
         switch newPhase {
         case .background:
+            if gameState.canPause {
+                gameState.pause()
+            }
             stopTimer()
         case .active:
             if gameState.timerStart != nil && !gameState.isComplete {
@@ -628,6 +690,17 @@ struct GameView: View {
         triggerMediumHaptic()
     }
 
+    private func resetCurrentPuzzle() {
+        gameState.reset()
+        elapsedTime = 0
+        hintsUsedThisGame = 0
+        showingHint = false
+        hintCells = []
+        undoUsedThisGame = false
+        stopTimer()
+        triggerMediumHaptic()
+    }
+
     // MARK: - Haptic Feedback
 
     private func triggerLightHaptic() {
@@ -677,9 +750,11 @@ struct GameView: View {
 
 struct TimerView: View {
     let elapsedTime: TimeInterval
+    var isPaused: Bool = false
 
     @State private var timerScale: CGFloat = 1.0
     @State private var hasAnimatedStart = false
+    @State private var blinkOpacity: Double = 1.0
 
     private var reduceMotion: Bool {
         SettingsManager.shared.reduceMotion
@@ -690,10 +765,22 @@ struct TimerView: View {
             .font(.system(size: 32, weight: .medium, design: .monospaced))
             .foregroundColor(.primary)
             .scaleEffect(timerScale)
+            .opacity(blinkOpacity)
             .onChange(of: elapsedTime) { oldTime, newTime in
                 if oldTime == 0 && newTime > 0 && !hasAnimatedStart && !reduceMotion {
                     hasAnimatedStart = true
                     animateTimerStart()
+                }
+            }
+            .onChange(of: isPaused) { _, paused in
+                if paused {
+                    withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+                        blinkOpacity = 0.3
+                    }
+                } else {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        blinkOpacity = 1.0
+                    }
                 }
             }
     }

@@ -97,7 +97,7 @@ struct DailyChallengeView: View {
                     Spacer()
 
                     Button(action: {
-                        gameState.undo()
+                        gameState.undoToPreviousNode()
                     }) {
                         HStack {
                             Image(systemName: "arrow.uturn.backward")

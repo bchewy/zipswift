@@ -169,4 +169,64 @@ struct LevelGeneratorTests {
         // Hard levels have fewer numbered nodes (less guidance)
         #expect(level.maxNumber <= 7)
     }
+
+    // MARK: - Wall Generation Tests
+
+    @Test func generatedLevelHasWallsForDifficulty() {
+        let level = LevelGenerator.generateLevel(difficulty: .medium, gridSize: .classic)
+
+        #expect(!level.walls.isEmpty)
+    }
+
+    @Test func generatedWallsDoNotCrossSolutionPath() {
+        let level = LevelGenerator.generateLevel(difficulty: .hard, gridSize: .classic)
+        guard let path = level.solutionPath else {
+            Issue.record("Level should have solution path")
+            return
+        }
+
+        var pathEdges = Set<Wall>()
+        for i in 0..<(path.count - 1) {
+            pathEdges.insert(Wall(path[i], path[i + 1]))
+        }
+
+        for wall in level.walls {
+            #expect(!pathEdges.contains(wall), "Wall \(wall) crosses solution path")
+        }
+    }
+
+    @Test func generatedLevelWithWallsIsSolvable() {
+        let level = LevelGenerator.generateLevel(difficulty: .medium, gridSize: .classic)
+        var state = GameState(level: level)
+
+        guard let solutionPath = level.solutionPath else {
+            Issue.record("Level should have a solution path")
+            return
+        }
+
+        for i in 1..<solutionPath.count {
+            let canVisit = state.canVisit(solutionPath[i])
+            #expect(canVisit, "Cannot visit cell \(i): \(solutionPath[i])")
+            if canVisit {
+                state.visit(solutionPath[i])
+            }
+        }
+
+        #expect(state.isComplete, "Level with walls should be completable via solution path")
+    }
+
+    @Test func noWallsWhenWallCountIsZero() {
+        let level = LevelGenerator.generateLevel(size: 6, numberOfNodes: 8)
+
+        #expect(level.walls.isEmpty)
+    }
+
+    @Test func wallsBetweenAdjacentCellsOnly() {
+        let level = LevelGenerator.generateLevel(difficulty: .hard, gridSize: .classic)
+
+        for wall in level.walls {
+            #expect(wall.cell1.isAdjacent(to: wall.cell2),
+                   "Wall cells must be adjacent: \(wall.cell1) and \(wall.cell2)")
+        }
+    }
 }

@@ -40,8 +40,10 @@ struct DailyChallenge {
 
     private static func generateSeededLevel(seed: UInt64) -> LevelDefinition {
         var rng = SeededRandomNumberGenerator(seed: seed)
-        let path = generateHamiltonianPath(size: 6, using: &rng)
+        let size = 6
+        let path = generateHamiltonianPath(size: size, using: &rng)
         let numberOfNodes = 8
+        let wallCount = 5
 
         var numberedCells: [Int: GridPoint] = [:]
         numberedCells[1] = path[0]
@@ -58,12 +60,48 @@ struct DailyChallenge {
             }
         }
 
+        let walls = generateSeededWalls(path: path, size: size, count: wallCount, using: &rng)
+
         return LevelDefinition(
-            size: 6,
+            size: size,
             numberedCells: numberedCells,
             maxNumber: numberOfNodes,
-            solutionPath: path
+            solutionPath: path,
+            walls: walls
         )
+    }
+
+    private static func generateSeededWalls(path: [GridPoint], size: Int, count: Int, using rng: inout SeededRandomNumberGenerator) -> Set<Wall> {
+        guard count > 0 else { return [] }
+
+        var pathEdges = Set<Wall>()
+        for i in 0..<(path.count - 1) {
+            pathEdges.insert(Wall(path[i], path[i + 1]))
+        }
+
+        var candidates: [Wall] = []
+        for row in 0..<size {
+            for col in 0..<size {
+                let cell = GridPoint(row: row, col: col)
+                if col + 1 < size {
+                    let right = GridPoint(row: row, col: col + 1)
+                    let wall = Wall(cell, right)
+                    if !pathEdges.contains(wall) {
+                        candidates.append(wall)
+                    }
+                }
+                if row + 1 < size {
+                    let below = GridPoint(row: row + 1, col: col)
+                    let wall = Wall(cell, below)
+                    if !pathEdges.contains(wall) {
+                        candidates.append(wall)
+                    }
+                }
+            }
+        }
+
+        candidates.shuffle(using: &rng)
+        return Set(candidates.prefix(count))
     }
 
     private static func generateHamiltonianPath(size: Int, using rng: inout SeededRandomNumberGenerator) -> [GridPoint] {

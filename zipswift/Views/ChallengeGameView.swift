@@ -92,7 +92,7 @@ struct ChallengeGameView: View {
                 Spacer()
 
                 if mode != .noUndo {
-                    Button(action: { gameState.undo() }) {
+                    Button(action: { gameState.undoToPreviousNode() }) {
                         HStack {
                             Image(systemName: "arrow.uturn.backward")
                             Text("Undo")
